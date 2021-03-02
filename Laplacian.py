@@ -39,19 +39,14 @@ def Laplacian_3D(phi,dx,N):
                                     -30*phi[i,j,k] + 16*phi[i,j,k-1] - phi[i,j,k-2]))/(12*dx**2.0)
     return ddphi
 
-# TIME EVOLUTION (LEAPFROG VELOCITY VERLET ALGORITHM)
+
+
+# GRADIENT FIELD (2D for now)
 @jit(nopython=True)
-def Evolve(phi1,phi2,phidot1,phidot2,f1,f2,Laplacian_2D,alpha,era,lambdaPRS,N,dx,dt,t):
-    phi1 = phi1 + dt*(phidot1 + 0.5*f1*dt)
-    phi2 = phi2 + dt*(phidot2 + 0.5*f2*dt)
-    # UPDATE
-    t = t+dt
-    f1_next = Laplacian_2D(phi1,dx,N) - 2*alpha*(era/t)*phidot1 - lambdaPRS*phi1*(phi1**2.0+phi2**2.0 - 1)# + 10**5.0/(t**2.0) 
-    f2_next = Laplacian_2D(phi2,dx,N) - 2*alpha*(era/t)*phidot2 - lambdaPRS*phi2*(phi1**2.0+phi2**2.0 - 1)# + 10**5.0/(t**2.0) 
-    #KICK
-    phidot1 = phidot1 + 0.5*(f1 + f1_next)*dt
-    phidot2 = phidot2 + 0.5*(f2 + f2_next)*dt
-    # UPDATE
-    f1 = 1.0*f1_next
-    f2 = 1.0*f2_next
-    return phi,phi2
+def Gradient_2D(f,dx,N):
+    df = zeros(shape=(N,N))
+    for i in range (0,N):
+        for j in range (0,N):
+            df[i,j] = ((- f[mod(i+2,N),j] + 8 * f[mod(i+1,N)] - 8 * f[i-1,j] + f[i-2,j])\
+                      (- f[i,mod(j+2,N)] + 8 * f[i,mod(j+1,N)] - 8 * f[i,j-1] + f[i,j-2] ))/(12*dx)
+    return df
