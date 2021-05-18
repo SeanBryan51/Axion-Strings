@@ -23,37 +23,36 @@ int Cores2D(,,double thr){
 	int count = 0;
 
 	for (int=1:-,=n;i++){
-        for (int j=0;j<N;j++){
+		for (int j=0;j<N;j++){
 
-            norm1 = (field[i][j] + M_PI)/(2*M_PI)
-            norm2 = (field[i+1][j] + M_PI)/(2*M_PI)
-            norm3 = (field[i+1][j+1] + M_PI)/(2*M_PI)
-            norm4 = (field[i][j+1] + M_PI)/(2*M_PI)
+            	norm1 = (field[i][j] + M_PI)/(2*M_PI)
+            	norm2 = (field[i+1][j] + M_PI)/(2*M_PI)
+            	norm3 = (field[i+1][j+1] + M_PI)/(2*M_PI)
+            	norm4 = (field[i][j+1] + M_PI)/(2*M_PI)
 
-            theta1 = min(abs(norm2-norm1),1-abs(norm2-norm1))
-            theta2 = min(abs(norm3-norm2),1-abs(norm3-norm2))
-            theta3 = min(abs(norm4-norm3),1-abs(norm4-norm3))
-            theta_sum = theta1 + theta2 + theta3
+            	theta1 = min(abs(norm2-norm1),1-abs(norm2-norm1))
+            	theta2 = min(abs(norm3-norm2),1-abs(norm3-norm2))
+            	theta3 = min(abs(norm4-norm3),1-abs(norm4-norm3))
+            	theta_sum = theta1 + theta2 + theta3
 
-            if (theta_sum > accept){
-                s.push_back([i,j])
-            }   
-        }
-    }
+            	if (theta_sum > accept){
+                	s.push_back([i,j])
+            		}   
+        	}
+    	}
 
-    for(int a=1,a<=s.size(),a++){
-
+    	for(int a=1,a<=s.size(),a++){
 		diff_y = s[a+1][1]-s[a][1]
-        diff_x = s[a+1][0]-s[a][0]
+        	diff_x = s[a+1][0]-s[a][0]
 
-        if(diff_y == 0 and diff_x == 1){
-            count+=1
-        }
+        	if(diff_y == 0 and diff_x == 1){
+            		count+=1
+			}
         
-        if(diff_y == 1 and diff_x == 0){
-            count+=1
-		}
-    }
+        	if(diff_y == 1 and diff_x == 0){
+            		count+=1
+			}
+    	}
     return s.size()-count
 }
 
