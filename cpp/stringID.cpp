@@ -22,7 +22,7 @@ int Cores2D(,,double thr){
 	double accept = 0.5 - 0.5*thr/100;
 	int count = 0;
 
-	for (int=1:-,=n;i++){
+	for (int=0,i<N;i++){
 		for (int j=0;j<N;j++){
 
             	norm1 = (field[i][j] + M_PI)/(2*M_PI)
@@ -65,7 +65,7 @@ int Cores3D(,,double thr){
     int count = 0;
 
     
-    for (int=1:-,=n;i++){
+    for (int=0,i<N;i++){
         for (int j=0;j<N;j++){
             for (int k=0;k<N;k++){
 
