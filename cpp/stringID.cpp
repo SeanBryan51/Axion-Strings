@@ -1,9 +1,3 @@
-#include "stringID.h"
-
-// function implementations:
-
-// TODO:
-
 
 #include <iostream> 
 #include <cstdlib>
@@ -13,9 +7,14 @@
 
 using namespace std;
 
+// External modules 
+
+#include "stringID.h"
+
+
 // 2D version
 
-int Cores2D(,,double thr){
+int Cores2D(){ // To insert arguments of function 
     
     // Initialize list to push back string locations  
 	vector <double> s;
@@ -58,7 +57,8 @@ int Cores2D(,,double thr){
 
 
 // 3D version
-int Cores3D(,,double thr){
+
+int Cores3D(){ // To insert arguments of function 
     
     vector <double> s;
     double accept = 0.5 - 0.5*thr/100;
