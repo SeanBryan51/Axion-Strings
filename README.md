@@ -2,17 +2,22 @@
 
 ## How to compile/run:
 
-Uses cmake to compile. To compile/build the project run
+Uses cmake to compile. To compile/build the project:
 
+1. Create build directory in project root
 ```
-cmake .
+mkdir build
 ```
-
+2. Build cmake project
 ```
-cmake --build .
+cmake -S . -B build
 ```
-
-Then to run the simulation
+2. Run make file to compile executable
+```
+cd build
+make
+```
+3. Then to run the simulation
 ```
 ./build/src/main param.param
 ```
