@@ -152,6 +152,7 @@ void read_parameter_file(char *fname) {
                 }
             } else {
                 printf("Error in file %s:   Tag '%s' not allowed or multiple defined.\n", fname, buf1);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -162,6 +163,7 @@ void read_parameter_file(char *fname) {
     for(int i = 0; i < n_params; i++) {
         if(parameters[i].tag[0]) {
             printf("Error. I miss a value for tag '%s' in parameter file '%s'.\n", parameters[i].tag, fname);
+            exit(EXIT_FAILURE);
         }
     }
 }

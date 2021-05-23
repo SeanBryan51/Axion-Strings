@@ -29,9 +29,9 @@ void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
                 th = 2 * M_PI * gsl_rng_uniform(rng);
                 r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                 // Note: offset(x,y) = (x + ny * y)
-                phi1[i + globals.N * j] = r * cosf(th);
-                phi2[i + globals.N * j] = r * sinf(th);
-                phidot1[i + globals.N * j] = phidot2[i + globals.N * j] = 0;
+                phi1[offset2(i,j,globals.N)] = r * cosf(th);
+                phi2[offset2(i,j,globals.N)] = r * sinf(th);
+                phidot1[offset2(i,j,globals.N)] = phidot2[offset2(i,j,globals.N)] = 0;
             }
         }
     } else if (globals.NDIMS == 3) {
@@ -39,12 +39,11 @@ void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
             for (int j = 0; j < globals.N; j++) {
                 for (int k = 0; k < globals.N; k++) {
                     th = 2 * M_PI * gsl_rng_uniform(rng);
-                    r = gsl_ran_gaussian(rng, 0.5f) + 1.0f;
+                    r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                     // Note: offset(x,y,z) = (x * ny + y) * nz + z
-                    phi1[(i * globals.N + j) * globals.N + k] = r * cosf(th);
-                    phi2[(i * globals.N + j) * globals.N + k] = r * sinf(th);
-                    phidot1[(i * globals.N + j) * globals.N + k] = 0;
-                    phidot2[(i * globals.N + j) * globals.N + k] = 0;
+                    phi1[offset3(i,j,j,globals.N)] = r * cosf(th);
+                    phi2[offset3(i,j,j,globals.N)] = r * sinf(th);
+                    phidot1[offset3(i,j,j,globals.N)] = phidot2[offset3(i,j,j,globals.N)] = 0;
                 }
             }
         }

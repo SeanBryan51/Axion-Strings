@@ -18,13 +18,15 @@ static int periodic(int i, int N) {
  * Stencil coefficients:
  * https://en.wikipedia.org/wiki/Finite_difference_coefficient
  */
-float laplacian2D(float *phi, int i, int j) {
+float laplacian2D(float *phi, int i, int j, float dx, int N) {
 
-    int N = globals.N;
     float laplacian;
 
     if (globals.StencilOrder == 2) {
-        laplacian = (( phi[offset2(periodic(i+1,N),j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(periodic(i-1,N),j,N)]) + (( phi[offset2(i,periodic(j+1,N),N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,periodic(j-1,N),N)] )))/(gsl_pow_2(globals.dx));
+        laplacian = (
+            (phi[offset2(periodic(i+1,N),j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(periodic(i-1,N),j,N)])
+          + (phi[offset2(i,periodic(j+1,N),N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,periodic(j-1,N),N)])
+          ) / (gsl_pow_2(dx));
     }
 
     if (globals.StencilOrder == 4) {
@@ -32,22 +34,19 @@ float laplacian2D(float *phi, int i, int j) {
         laplacian = 0.0f;
     }
 
-    if (globals.StencilOrder == 6) {
-        // TODO:
-        laplacian = 0.0f;
-    }
-
     return laplacian;
 }
 
-float laplacian3D(float *phi, int i, int j, int k) {
+float laplacian3D(float *phi, int i, int j, int k, float dx, int N) {
 
-    int N = globals.N;
     float laplacian;
 
     if (globals.StencilOrder == 2) {
-        // TODO:
-        laplacian = 0.0f;
+        laplacian = (
+            (phi[offset3(periodic(i+1,N),j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(periodic(i-1,N),j,k,N)])
+          + (phi[offset3(i,periodic(j+1,N),k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,periodic(j-1,N),k,N)])
+          + (phi[offset3(i,j,periodic(k+1,N),N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j,periodic(k-1,N),N)])
+          )/gsl_pow_2(dx);
     }
 
     if (globals.StencilOrder == 4) {
@@ -55,40 +54,24 @@ float laplacian3D(float *phi, int i, int j, int k) {
         laplacian = 0.0f;
     }
 
-    if (globals.StencilOrder == 6) {
-        // TODO:
-        laplacian = 0.0f;
-    }
-
     return laplacian;
 }
 
-void gradient(float *dphi, float *phi) {
+void gradient2D(float *dphi, float *phi) {
 
-    if (globals.NDIMS == 2) {
-        if (globals.StencilOrder == 2) {
+    int N = globals.N;
+    if (globals.StencilOrder == 2) {
 
-            int N = globals.N;
-            for (int i = 0; i < N; i++) {
-                for (int j = 0; j < N; j++) {
-                    // TODO:
-                    // dphi[i,j] = ((-phi[np.mod(i+2,N),j]+8*phi[np.mod(i+1,N),j]-8*phi[i-1,j] + phi[i-2,j])\
-                    //     + (-phi[i,np.mod(j+2,N)] + 8*phi[i,np.mod(j+1,N)] -8*phi[i,j-1] + phi[i,j-2]))/(12*dx) 
-                }
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                // TODO: is this the magnitude of the gradient?
+                // dphi[i,j] = ((-phi[np.mod(i+2,N),j]+8*phi[np.mod(i+1,N),j]-8*phi[i-1,j] + phi[i-2,j])\
+                //     + (-phi[i,np.mod(j+2,N)] + 8*phi[i,np.mod(j+1,N)] -8*phi[i,j-1] + phi[i,j-2]))/(12*dx) 
             }
         }
-
-        if (globals.StencilOrder == 4) {
-            // TODO
-        }
-
-        if (globals.StencilOrder == 6) {
-            // TODO
-        }
-
     }
 
-    if (globals.NDIMS == 3) {
-        // TODO:
+    if (globals.StencilOrder == 4) {
+        // TODO
     }
 }

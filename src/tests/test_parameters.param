@@ -1,0 +1,17 @@
+% Mock parameter file for testing:
+
+NDIMS               2 % Number of dimensions
+N                   256     % Number of grid points
+Delta               1.0     % Default Delta=1 and H=fa
+DeltaRatio          0.3333333333    % Time/Space step ratio
+StencilOrder        2       % Choose order accuracy in dx for spatial derivative calculations. Options: StencilOrder = 2,4,6
+fa_phys             1e12    % Physical value of fa in GeV
+lambdaPRS           1.0     % Quartic coupling 
+Potential           Thermal % Choose potential. Options: 'MexicanHat' or 'Thermal'
+Era                 1.0     % era=1 for radiation domination, era=2 for early matter domination (in PRS trick)
+% run_with_ic         0 % Run with user supplied initial conditions.
+% ic_file_path        asdf.txt
+save_snapshots      1
+seed                2021
+n_snapshots         69
+output_directory    foobar

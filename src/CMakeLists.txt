@@ -39,3 +39,13 @@ add_library(
 target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(utils GSL::gsl)
 target_link_libraries(main utils)
+
+# configure tests:
+
+add_executable(test_standard tests/test_standard.cpp)
+target_link_libraries(test_standard standard utils)
+add_test(test-standard test_standard)
+
+add_executable(test_parameters tests/test_parameters.cpp)
+target_link_libraries(test_parameters standard utils)
+add_test(test-parameters test_parameters)
