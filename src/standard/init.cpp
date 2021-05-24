@@ -41,9 +41,9 @@ void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
                     th = 2 * M_PI * gsl_rng_uniform(rng);
                     r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                     // Note: offset(x,y,z) = (x * ny + y) * nz + z
-                    phi1[offset3(i,j,j,globals.N)] = r * cosf(th);
-                    phi2[offset3(i,j,j,globals.N)] = r * sinf(th);
-                    phidot1[offset3(i,j,j,globals.N)] = phidot2[offset3(i,j,j,globals.N)] = 0;
+                    phi1[offset3(i,j,k,globals.N)] = r * cosf(th);
+                    phi2[offset3(i,j,k,globals.N)] = r * sinf(th);
+                    phidot1[offset3(i,j,k,globals.N)] = phidot2[offset3(i,j,k,globals.N)] = 0;
                 }
             }
         }
