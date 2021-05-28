@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <gsl/gsl_math.h>
 
-#include "util.h"
+#include "utils.h"
 #include "../parameters.h"
 
 #define MAX_TAGS 300
