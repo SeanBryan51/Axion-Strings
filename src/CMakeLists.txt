@@ -6,6 +6,10 @@ add_executable(
 
 # link third party libraries:
 
+include_directories(/usr/local/Cellar/fftw/3.3.8_2/include)
+link_directories(/usr/local/Cellar/fftw/3.3.8_2/lib)
+target_link_options(main PUBLIC -I/usr/local/Cellar/fftw/3.3.8_2/include -L/usr/local/Cellar/fftw/3.3.8_2/lib -lfftw3 -lm)
+
 find_package(GSL REQUIRED)
 target_link_libraries(main GSL::gsl)
 

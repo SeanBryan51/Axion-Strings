@@ -34,9 +34,8 @@ void run_standard() {
     assert(phi1 != NULL && phi2 != NULL && phidot1 != NULL && phidot2 != NULL);
 
     // Initialise fields:
-    init_noise(phi1, phi2, phidot1, phidot2);
-    // TODO:
-    // gaussian_thermal(phi1, phi2, phidot1, phidot2, 0);
+    // init_noise(phi1, phi2, phidot1, phidot2);
+    gaussian_thermal(phi1, phi2, phidot1, phidot2);
 
     // Allocate field kernels on the heap:
     float *ker1_curr = (float *) calloc(length, sizeof(float));

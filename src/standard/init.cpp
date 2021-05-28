@@ -5,19 +5,37 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_math.h>
-// #include <fftw3.h>
+#include <fftw3.h>
 
 #include "../parameters.h"
 #include "init.h"
 #include "spatial.h"
+
+static void shift2D(fftw_complex *arr, int N) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            arr[offset2(i,j,N)][0] *= pow(-1.0f, i + j);
+            arr[offset2(i,j,N)][1] *= pow(-1.0f, i + j);
+        }
+    }
+}
+
+static void shift3D(fftw_complex *arr, int N) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                arr[offset3(i,j,k,N)][0] *= pow(-1.0f, i + j + k);
+                arr[offset3(i,j,k,N)][1] *= pow(-1.0f, i + j + k);
+            }
+        }
+    }
+}
 
 /*
  * Random white noise in position space, independent of the shape
  * of the potential.
  */
 void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
-
-    // TODO: Gadget2 generates a seed table from the single seed value, is this better?
 
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
     gsl_rng_set(rng, globals.seed);
@@ -50,94 +68,158 @@ void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
     }
 }
 
-void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot2, int flag_normalise) {
-    // TODO
+void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot2) {
 
+    int length, N = globals.N;
+    gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
+    gsl_rng_set(rng, globals.seed);
+
+    if (globals.NDIMS == 2) {
+        length = N * N;
+
+        float *kx = (float *) calloc(N, sizeof(int));
+        float *ky = (float *) calloc(N, sizeof(int));
+
+        for(int i = 0; i < N; i++) {
+            kx[i] = ky[i] = - N / 2.0f + i;
+        }
+
+        fftw_complex *phi_k, *phi, *phidot_k, *phidot;
+        fftw_plan p1, p2;
+
+        phi_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        phi = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        p1 = fftw_plan_dft_2d(N, N, phi_k, phi, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        phidot_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        p2 = fftw_plan_dft_2d(N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+
+                float k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
+                float omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
+                float bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
+                float amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
+                float amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+
+                phi_k[offset2(i,j,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+                phi_k[offset2(i,j,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+                phidot_k[offset2(i,j,N)][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+                phidot_k[offset2(i,j,N)][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+
+            }
+        }
+
+        fftw_execute(p1);
+        fftw_execute(p2);
+
+        shift2D(phi, N);
+        shift2D(phidot, N);
+
+        for (int i = 0; i < length; i++) {
+            phi1[i] = phi[i][0]; // Re(phi)
+            phi2[i] = phi[i][1]; // Im(phi)
+            phidot1[i] = phidot[i][0]; // Re(phidot)
+            phidot2[i] = phidot[i][1]; // Im(phidot)
+        }
+
+        fftw_destroy_plan(p1);
+        fftw_free(phi_k);
+        fftw_free(phi);
+        fftw_destroy_plan(p2);
+        fftw_free(phidot_k);
+        fftw_free(phidot);
+    }
+
+    if (globals.NDIMS == 3) {
+        length = N * N * N;
+
+        float *kx = (float *) calloc(N, sizeof(int));
+        float *ky = (float *) calloc(N, sizeof(int));
+        float *kz = (float *) calloc(N, sizeof(int));
+
+        for(int i = 0; i < N; i++) {
+            kx[i] = ky[i] = kz[i] = - N / 2.0f + i;
+        }
+
+        fftw_complex *phi_k, *phi, *phidot_k, *phidot;
+        fftw_plan p1, p2;
+
+        phi_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        phi = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        p1 = fftw_plan_dft_3d(N, N, N, phi_k, phi, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        phidot_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        p2 = fftw_plan_dft_3d(N, N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                for (int l = 0; l < N; l++) {
+
+                    float k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
+                    float omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
+                    float bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
+                    float amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
+                    float amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+
+                    phi_k[offset3(i,j,l,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+                    phi_k[offset3(i,j,l,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+                    phidot_k[offset3(i,j,l,N)][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+                    phidot_k[offset3(i,j,l,N)][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+
+                }
+            }
+        }
+
+        fftw_execute(p1);
+        fftw_execute(p2);
+
+        shift3D(phi, N);
+        shift3D(phidot, N);
+
+        for (int i = 0; i < length; i++) {
+            phi1[i] = phi[i][0]; // Re(phi)
+            phi2[i] = phi[i][1]; // Im(phi)
+            phidot1[i] = phidot[i][0]; // Re(phidot)
+            phidot2[i] = phidot[i][1]; // Im(phidot)
+        }
+
+        fftw_destroy_plan(p1);
+        fftw_free(phi_k);
+        fftw_free(phi);
+        fftw_destroy_plan(p2);
+        fftw_free(phidot_k);
+        fftw_free(phidot);
+    }
+
+    // 1. Calculate mean.
+    float phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
+    phi1_mean = phi2_mean = phidot1_mean = phidot2_mean = 0.0f;
+    for (int i = 0; i < length; i++) {
+        phi1_mean += phi1[i] / length;
+        phi2_mean += phi2[i] / length;
+        phidot1_mean += phidot1[i] / length;
+        phidot2_mean += phidot2[i] / length;
+    }
+
+    // 2. Calculate standard deviation.
+    float phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
+    phi1_sd = phi2_sd = phidot1_sd = phidot2_sd = 0.0f;
+    for (int i = 0; i < length; i++) {
+        phi1_sd += gsl_pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
+        phi2_sd += gsl_pow_2(phi2[i] - phi2_mean) / (length - 1.0f);
+        phidot1_sd += gsl_pow_2(phidot1[i] - phidot1_mean) / (length - 1.0f);
+        phidot2_sd += gsl_pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
+    }
+
+    // 3. Normalise.
+    for (int i = 0; i < length; i++) {
+        phi1[i] = (phi1[i] - phi1_mean) / phi1_sd;
+        phi2[i] = (phi2[i] - phi2_mean) / phi2_sd;
+        phidot1[i] = (phidot1[i] - phidot1_mean) / phidot1_sd;
+        phidot2[i] = (phidot2[i] - phidot2_mean) / phidot2_sd;
+    }
 }
-
-// def fftind(N):
-//     k_ind = np.mgrid[:N, :N] - int( (N + 1)/2 )
-//     k_ind = scipy.fftpack.fftshift(k_ind)
-//     return(k_ind)
-
-
-// def IC_Thermal(L,k_scale,meffsquared,T0,N,flag_normalize = True):
-    
-//     k_idx = fftind(N)
-
-//     k = np.sqrt(k_idx[0]**2 + k_idx[1]**2+1e-10)
-//     omegak = np.sqrt((k*np.pi/N)**2 + meffsquared)
-//     bose = 1/(np.exp(omegak/T0)-1)
-//     amplitude = np.sqrt(L*bose/omegak) # Power spectrum for phi
-//     amplitude_dot = np.sqrt(L*bose*omegak) # Power spectrum for phidot
-    
-//     if NDIMS == 2:
-        
-//         noise = random.normal(size = (N, N)) + 1j*random.normal(size = (N,N)) 
-        
-//         if single_precision:
-            
-//             noise = noise.astype('float32')
-        
-//         gfield1 = scipy.fft.ifft2(noise*amplitude).real
-//         gfield2 = scipy.fft.ifft2(noise*amplitude).imag
-
-//         if flag_normalize:
-
-//             gfield1 = gfield1 - np.mean(gfield1)
-//             gfield1 = gfield1/np.std(gfield1)
-
-//         if flag_normalize:
-
-//             gfield2 = gfield2 - np.mean(gfield2)
-//             gfield2 = gfield2/np.std(gfield2)
-          
-//         gfield1_dot = scipy.fft.ifft2(noise*amplitude_dot).real
-//         gfield2_dot = scipy.fft.ifft2(noise*amplitude_dot).imag
-
-//         if flag_normalize:
-            
-//             gfield1_dot = gfield1_dot - np.mean(gfield1_dot)
-//             gfield1_dot = gfield1_dot/np.std(gfield1_dot)
-        
-//         if flag_normalize:
-            
-//             gfield2_dot = gfield2_dot - np.mean(gfield2_dot)
-//             gfield2_dot = gfield2_dot/np.std(gfield2_dot)
-    
-//     if NDIMS == 3:
-        
-//         noise = random.normal(size = (N,N,N)) + 1j*random.normal(size = (N,N,N))
-        
-//         if single_precision:
-            
-//             noise = noise.astype('float32')
-            
-//         gfield1 = scipy.fft.ifftn(noise*amplitude).real
-//         gfield2 = scipy.fft.ifftn(noise*amplitude).imag
-
-//         if flag_normalize:
-
-//             gfield1 = gfield1 - np.mean(gfield1)
-//             gfield1 = gfield1/np.std(gfield1)
-
-//         if flag_normalize:
-
-//             gfield2 = gfield2 - np.mean(gfield2)
-//             gfield2 = gfield2/np.std(gfield2)
-
-           
-//         gfield1_dot = scipy.fft.ifftn(noise*amplitude_dot).real
-//         gfield2_dot = scipy.fft.ifftn(noise*amplitude_dot).imag
-
-//         if flag_normalize:
-            
-//             gfield1_dot = gfield1_dot - np.mean(gfield1_dot)
-//             gfield1_dot = gfield1_dot/np.std(gfield1_dot)
-        
-//         if flag_normalize:
-            
-//             gfield2_dot = gfield2_dot - np.mean(gfield2_dot)
-//             gfield2_dot = gfield2_dot/np.std(gfield2_dot)
-
-//     return gfield1,gfield2,gfield1_dot,gfield2_dot
