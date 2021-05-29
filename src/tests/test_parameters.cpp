@@ -21,7 +21,7 @@ void test_read_parameters() {
     assert(globals.save_snapshots == 1);
     assert(globals.seed == 2021);
     assert(globals.n_snapshots == 69);
-    assert(strcmp(globals.output_directory, "foobar") == 0);
+    assert(strcmp(globals.output_directory, "/Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files") == 0);
 }
 
 int main() {
