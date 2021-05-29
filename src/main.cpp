@@ -14,8 +14,6 @@ int main(int argc, char *argv[]) {
     // Set global variables from parameter file:
     initialise_globals(argv[1]);
 
-    // TODO: log simulation parameters etc
-
     run_standard();
 
     return EXIT_SUCCESS;
