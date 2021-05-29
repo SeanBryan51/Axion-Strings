@@ -205,6 +205,8 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         free(kz);
     }
 
+    // TODO: what order of magnitude should the fluctuations in the field be?
+
     // 1. Calculate mean.
     dtype phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
     phi1_mean = phi2_mean = phidot1_mean = phidot2_mean = 0.0f;
@@ -225,10 +227,11 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         phidot2_sd += gsl_pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
     }
 
-    phi1_sd = sqrt(phi1_sd);
-    phi2_sd = sqrt(phi2_sd);
-    phidot1_sd = sqrt(phidot1_sd);
-    phidot2_sd = sqrt(phidot2_sd);
+    // TODO: uncommenting the following causes the simulation to diverge! WHY
+    // phi1_sd = pow(phi1_sd, 0.5);
+    // phi2_sd = pow(phi2_sd, 0.5);
+    // phidot1_sd = pow(phidot1_sd, 0.5);
+    // phidot2_sd = pow(phidot2_sd, 0.5);
 
     // 3. Normalise.
     for (int i = 0; i < length; i++) {
