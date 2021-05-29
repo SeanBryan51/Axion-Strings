@@ -3,14 +3,14 @@
 #include <gsl/gsl_math.h>
 
 #include "../parameters.h"
-#include "spatial.h"
+#include "common.h"
 
 /*
  * Performs the element wise addition:
  * phi1 = phi1 + dtau*(phidot1 + 0.5*K1*dtau)
  * phi2 = phi2 + dtau*(phidot2 + 0.5*K2*dtau)
  */
-void apply_drift(float *phi1, float *phi2, float *phi1dot, float *phi2dot, float *K1, float *K2) {
+void apply_drift(dtype *phi1, dtype *phi2, dtype *phi1dot, dtype *phi2dot, dtype *K1, dtype *K2) {
 
     int N = globals.N;
     if (globals.NDIMS == 2) {
@@ -32,7 +32,7 @@ void apply_drift(float *phi1, float *phi2, float *phi1dot, float *phi2dot, float
  *  phidot1 = phidot1 + 0.5*(K1 + K1_next)*dtau
  *  phidot2 = phidot2 + 0.5*(K2 + K2_next)*dtau
  */
-void apply_kick(float *phi1dot, float *phi2dot, float *K1, float*K2, float *K1_next, float *K2_next) {
+void apply_kick(dtype *phi1dot, dtype *phi2dot, dtype *K1, dtype*K2, dtype *K1_next, dtype *K2_next) {
     int N = globals.N;
     if (globals.NDIMS == 2) {
         for (int i = 0; i < N; i++) {
@@ -55,11 +55,11 @@ void apply_kick(float *phi1dot, float *phi2dot, float *K1, float*K2, float *K1_n
  *  K1 = Laplacian(phi1,dx,N) - 2*(Era/t_evol)*phidot1 - lambdaPRS*phi1*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*t_evol**2.0))
  *  K2 = Laplacian(phi2,dx,N) - 2*(Era/t_evol)*phidot2 - lambdaPRS*phi2*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*t_evol**2.0))
  */
-void kernels(float *ker1, float *ker2, float *phi1, float *phi2, float *phidot1, float *phidot2) {
+void kernels(dtype *ker1, dtype *ker2, dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
     int N = globals.N;
     float dx = globals.dx;
-    float l_phi1, l_phi2; // (temporary variables)
+    dtype l_phi1, l_phi2; // (temporary variables)
 
     if (globals.NDIMS == 2) {
 

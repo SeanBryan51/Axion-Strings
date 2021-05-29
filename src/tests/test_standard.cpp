@@ -3,13 +3,13 @@
 #include <gsl/gsl_math.h>
 #include <assert.h>
 
-#include "standard/spatial.h"
+#include "standard/common.h"
 #include "utils/utils.h"
 #include "parameters.h"
 
 #define MAX_STENCIL 2
 
-int is_equal(float x, float y, float tolerance) {
+int is_equal(dtype x, dtype y, dtype tolerance) {
     assert(tolerance > 0.0f);
     return x - y <= tolerance && x - y >= -tolerance;
 }
@@ -18,7 +18,7 @@ void test_laplacian2D() {
 
     // success case: simple array of zeros
     int N = 128;
-    float *phi = (float *) calloc(N * N, sizeof(float));
+    dtype *phi = (dtype *) calloc(N * N, sizeof(dtype));
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             assert(is_equal(laplacian2D(phi, i, j, 1.0f, N), 0.0f, 1e-30f));
@@ -28,8 +28,8 @@ void test_laplacian2D() {
 
     // success case: wave with periodic boundary conditions
     N = 256;
-    phi = (float *) calloc(N * N, sizeof(float));
-    float L = N / 2.0f;
+    phi = (dtype *) calloc(N * N, sizeof(dtype));
+    dtype L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // define field values
@@ -39,8 +39,8 @@ void test_laplacian2D() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // compare discretised laplacian and actual laplacian
-            float discretised_laplacian = laplacian2D(phi, i, j, 1.0f, N);
-            float actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
+            dtype discretised_laplacian = laplacian2D(phi, i, j, 1.0f, N);
+            dtype actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
             assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
         }
     }
@@ -51,7 +51,7 @@ void test_laplacian3D() {
 
     // success case: simple array of zeros
     int N = 128;
-    float *phi = (float *) calloc(N * N * N, sizeof(float));
+    dtype *phi = (dtype *) calloc(N * N * N, sizeof(dtype));
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -63,8 +63,8 @@ void test_laplacian3D() {
 
     // success case: wave with periodic boundary conditions
     N = 256;
-    phi = (float *) calloc(N * N * N, sizeof(float));
-    float L = N / 2.0f;
+    phi = (dtype *) calloc(N * N * N, sizeof(dtype));
+    dtype L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -77,8 +77,8 @@ void test_laplacian3D() {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
                 // compare discretised laplacian and actual laplacian
-                float discretised_laplacian = laplacian3D(phi, i, j, k, 1.0f, N);
-                float actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
+                dtype discretised_laplacian = laplacian3D(phi, i, j, k, 1.0f, N);
+                dtype actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
                 assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
             }
         }

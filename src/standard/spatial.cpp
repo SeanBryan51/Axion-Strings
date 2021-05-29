@@ -1,6 +1,6 @@
 #include <gsl/gsl_math.h>
 
-#include "spatial.h"
+#include "common.h"
 #include "../parameters.h"
 
 // TODO: implement as a macro to avoid function overhead?
@@ -18,9 +18,9 @@ static int periodic(int i, int N) {
  * Stencil coefficients:
  * https://en.wikipedia.org/wiki/Finite_difference_coefficient
  */
-float laplacian2D(float *phi, int i, int j, float dx, int N) {
+dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
 
-    float laplacian;
+    dtype laplacian;
 
     if (globals.StencilOrder == 2) {
         laplacian = (
@@ -37,9 +37,9 @@ float laplacian2D(float *phi, int i, int j, float dx, int N) {
     return laplacian;
 }
 
-float laplacian3D(float *phi, int i, int j, int k, float dx, int N) {
+dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
 
-    float laplacian;
+    dtype laplacian;
 
     if (globals.StencilOrder == 2) {
         laplacian = (
@@ -57,7 +57,7 @@ float laplacian3D(float *phi, int i, int j, int k, float dx, int N) {
     return laplacian;
 }
 
-void gradient2D(float *dphi, float *phi) {
+void gradient2D(dtype *dphi, dtype *phi) {
 
     int N = globals.N;
     if (globals.StencilOrder == 2) {

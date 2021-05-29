@@ -17,16 +17,13 @@ target_link_libraries(main GSL::gsl)
 
 add_library(
     standard
-    standard/run.cpp
+    standard/common.h
     standard/interface.h
+    standard/run.cpp
     standard/init.cpp
-    standard/init.h
     standard/spatial.cpp
-    standard/spatial.h
     standard/evolve.cpp
-    standard/evolve.h
     # standard/stringID.cpp
-    # standard/stringID.h
 )
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

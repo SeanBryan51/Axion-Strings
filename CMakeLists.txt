@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 message("M E S S A G E  > Hello, world!")
 
@@ -14,5 +14,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 enable_testing()
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+
+# settings determined at compile time:
+add_compile_definitions(
+    # USE_DOUBLE_PRECISION
+)
 
 add_subdirectory(src)

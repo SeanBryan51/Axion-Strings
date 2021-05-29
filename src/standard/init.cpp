@@ -8,9 +8,11 @@
 #include <fftw3.h>
 
 #include "../parameters.h"
-#include "init.h"
-#include "spatial.h"
+#include "common.h"
 
+/*
+ * See question 3.11. from http://www.fftw.org/faq/
+ */
 static void shift2D(fftw_complex *arr, int N) {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -20,6 +22,9 @@ static void shift2D(fftw_complex *arr, int N) {
     }
 }
 
+/*
+ * See question 3.11. from http://www.fftw.org/faq/
+ */
 static void shift3D(fftw_complex *arr, int N) {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -35,12 +40,12 @@ static void shift3D(fftw_complex *arr, int N) {
  * Random white noise in position space, independent of the shape
  * of the potential.
  */
-void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
+void init_noise(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
     gsl_rng_set(rng, globals.seed);
 
-    float th, r;
+    dtype th, r;
     if (globals.NDIMS == 2) {
         for (int i = 0; i < globals.N; i++) {
             for (int j = 0; j < globals.N; j++) {
@@ -68,7 +73,7 @@ void init_noise(float *phi1, float *phi2, float *phidot1, float *phidot2) {
     }
 }
 
-void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot2) {
+void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2) {
 
     int length, N = globals.N;
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
@@ -77,8 +82,8 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
     if (globals.NDIMS == 2) {
         length = N * N;
 
-        float *kx = (float *) calloc(N, sizeof(int));
-        float *ky = (float *) calloc(N, sizeof(int));
+        dtype *kx = (dtype *) calloc(N, sizeof(int));
+        dtype *ky = (dtype *) calloc(N, sizeof(int));
 
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = - N / 2.0f + i;
@@ -98,11 +103,11 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
 
-                float k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-                float omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
-                float bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
-                float amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
-                float amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+                dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
+                dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
+                dtype bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
+                dtype amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
+                dtype amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
 
                 phi_k[offset2(i,j,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
                 phi_k[offset2(i,j,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
@@ -131,14 +136,16 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
         fftw_destroy_plan(p2);
         fftw_free(phidot_k);
         fftw_free(phidot);
+        free(kx);
+        free(ky);
     }
 
     if (globals.NDIMS == 3) {
         length = N * N * N;
 
-        float *kx = (float *) calloc(N, sizeof(int));
-        float *ky = (float *) calloc(N, sizeof(int));
-        float *kz = (float *) calloc(N, sizeof(int));
+        dtype *kx = (dtype *) calloc(N, sizeof(int));
+        dtype *ky = (dtype *) calloc(N, sizeof(int));
+        dtype *kz = (dtype *) calloc(N, sizeof(int));
 
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = kz[i] = - N / 2.0f + i;
@@ -159,11 +166,11 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
             for (int j = 0; j < N; j++) {
                 for (int l = 0; l < N; l++) {
 
-                    float k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-                    float omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
-                    float bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
-                    float amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
-                    float amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+                    dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
+                    dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
+                    dtype bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
+                    dtype amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
+                    dtype amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
 
                     phi_k[offset3(i,j,l,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
                     phi_k[offset3(i,j,l,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
@@ -193,10 +200,13 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
         fftw_destroy_plan(p2);
         fftw_free(phidot_k);
         fftw_free(phidot);
+        free(kx);
+        free(ky);
+        free(kz);
     }
 
     // 1. Calculate mean.
-    float phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
+    dtype phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
     phi1_mean = phi2_mean = phidot1_mean = phidot2_mean = 0.0f;
     for (int i = 0; i < length; i++) {
         phi1_mean += phi1[i] / length;
@@ -206,7 +216,7 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
     }
 
     // 2. Calculate standard deviation.
-    float phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
+    dtype phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
     phi1_sd = phi2_sd = phidot1_sd = phidot2_sd = 0.0f;
     for (int i = 0; i < length; i++) {
         phi1_sd += gsl_pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
@@ -214,6 +224,11 @@ void gaussian_thermal(float * phi1, float * phi2, float * phidot1, float *phidot
         phidot1_sd += gsl_pow_2(phidot1[i] - phidot1_mean) / (length - 1.0f);
         phidot2_sd += gsl_pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
     }
+
+    phi1_sd = sqrt(phi1_sd);
+    phi2_sd = sqrt(phi2_sd);
+    phidot1_sd = sqrt(phidot1_sd);
+    phidot2_sd = sqrt(phidot2_sd);
 
     // 3. Normalise.
     for (int i = 0; i < length; i++) {

@@ -5,13 +5,11 @@
 #include "../parameters.h"
 #include "../utils/utils.h"
 
-#include "init.h"
-#include "spatial.h"
-#include "evolve.h"
+#include "common.h"
 #include "interface.h"
 
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
-void debug(float *phi1, float *phi2, float *phidot1, float *phidot2, float *ker1_curr, float *ker2_curr, float *ker1_next, float *ker2_next, int length, int tstep);
+void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1_curr, dtype *ker2_curr, dtype *ker1_next, dtype *ker2_next, int length, int tstep);
 
 void run_standard() {
 
@@ -25,10 +23,10 @@ void run_standard() {
         length = globals.N * globals.N;
     }
 
-    float *phi1 = (float *) calloc(length, sizeof(float));
-    float *phi2 = (float *) calloc(length, sizeof(float));
-    float *phidot1 = (float *) calloc(length, sizeof(float));
-    float *phidot2 = (float *) calloc(length, sizeof(float));
+    dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phidot1 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phidot2 = (dtype *) calloc(length, sizeof(dtype));
 
     // Assert allocation was successful:
     assert(phi1 != NULL && phi2 != NULL && phidot1 != NULL && phidot2 != NULL);
@@ -38,10 +36,10 @@ void run_standard() {
     gaussian_thermal(phi1, phi2, phidot1, phidot2);
 
     // Allocate field kernels on the heap:
-    float *ker1_curr = (float *) calloc(length, sizeof(float));
-    float *ker2_curr = (float *) calloc(length, sizeof(float));
-    float *ker1_next = (float *) calloc(length, sizeof(float));
-    float *ker2_next = (float *) calloc(length, sizeof(float));
+    dtype *ker1_curr = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker2_curr = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker1_next = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker2_next = (dtype *) calloc(length, sizeof(dtype));
 
     // Assert allocation was successful:
     assert(ker1_curr != NULL && ker2_curr != NULL && ker1_next != NULL && ker2_next != NULL);
@@ -129,7 +127,7 @@ void run_standard() {
 }
 
 
-void debug(float *phi1, float *phi2, float *phidot1, float *phidot2, float *ker1_curr, float *ker2_curr, float *ker1_next, float *ker2_next, int length, int tstep) {
+void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1_curr, dtype *ker2_curr, dtype *ker1_next, dtype *ker2_next, int length, int tstep) {
     for (int i = 0; i < length; i++) {
         if (gsl_isnan(phi1[i])) {
             printf("NaN encountered in phi1\n");
