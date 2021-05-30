@@ -167,26 +167,24 @@ void read_parameter_file(char *fname) {
         }
     }
 
-    // Log parameter values:
-    logger((char *) "Input parameters:\n");
+    // print parameter values:
+    printf("Input parameters:\n");
     parameters_to_read(parameters);
     for(int i = 0; i < n_params; i++) {
-        char message[MAX_LINE_WIDTH];
         switch (parameters[i].type) {
             case DOUBLE:
-                sprintf(message, "  %s %f\n", parameters[i].tag, *((double *) parameters[i].addr));
+                printf("  %s %f\n", parameters[i].tag, *((double *) parameters[i].addr));
                 break;
             case STRING:
-                sprintf(message, "  %s %s\n", parameters[i].tag, (char *) parameters[i].addr);
+                printf("  %s %s\n", parameters[i].tag, (char *) parameters[i].addr);
                 break;
             case FLOAT:
-                sprintf(message, "  %s %f\n", parameters[i].tag, *((float *) parameters[i].addr));
+                printf("  %s %f\n", parameters[i].tag, *((float *) parameters[i].addr));
                 break;
             case INT:
-                sprintf(message, "  %s %d\n", parameters[i].tag, *((int *) parameters[i].addr));
+                printf("  %s %d\n", parameters[i].tag, *((int *) parameters[i].addr));
                 break;
         }
-        logger(message);
     }
 }
 

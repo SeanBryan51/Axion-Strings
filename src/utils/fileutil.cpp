@@ -30,17 +30,3 @@ void save_data(char *file_name, dtype *data, int length) {
     fclose(fp);
     
 }
-
-void logger(char * message) {
-
-    char *file_name = (char *) "run.log";
-    char *path = (char *) alloca(sizeof(globals.output_directory) + sizeof(file_name) + 1);
-    sprintf(path, "%s/%s", globals.output_directory, file_name);
-
-    FILE *fp = fopen(path, "a");
-    assert(fp != NULL);
-
-    fprintf(fp, "%s", message);
-
-    fclose(fp);
-}
