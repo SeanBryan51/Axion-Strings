@@ -82,8 +82,8 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     if (globals.NDIMS == 2) {
         length = N * N;
 
-        dtype *kx = (dtype *) calloc(N, sizeof(int));
-        dtype *ky = (dtype *) calloc(N, sizeof(int));
+        dtype *kx = (dtype *) calloc(N, sizeof(dtype));
+        dtype *ky = (dtype *) calloc(N, sizeof(dtype));
 
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = - N / 2.0f + i;
@@ -143,9 +143,9 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     if (globals.NDIMS == 3) {
         length = N * N * N;
 
-        dtype *kx = (dtype *) calloc(N, sizeof(int));
-        dtype *ky = (dtype *) calloc(N, sizeof(int));
-        dtype *kz = (dtype *) calloc(N, sizeof(int));
+        dtype *kx = (dtype *) calloc(N, sizeof(dtype));
+        dtype *ky = (dtype *) calloc(N, sizeof(dtype));
+        dtype *kz = (dtype *) calloc(N, sizeof(dtype));
 
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = kz[i] = - N / 2.0f + i;

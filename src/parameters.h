@@ -27,6 +27,7 @@ extern struct _globals {
     unsigned int seed;
 
     // String finding:
+    int run_string_finding;
     int string_checks;
     int thr;
 

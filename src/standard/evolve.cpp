@@ -6,48 +6,36 @@
 #include "common.h"
 
 /*
- * Performs the element wise addition:
- * phi1 = phi1 + dtau*(phidot1 + 0.5*K1*dtau)
- * phi2 = phi2 + dtau*(phidot2 + 0.5*K2*dtau)
+ * Velocity-Verlet time evolution algorithm, see equation (125)
+ * in arXiv:2006.15122v2 'The art of simulating the early
+ * Universe'.
  */
-void apply_drift(dtype *phi1, dtype *phi2, dtype *phi1dot, dtype *phi2dot, dtype *K1, dtype *K2) {
+void velocity_verlet_scheme(dtype *phi1, dtype *phi2,
+                            dtype *phidot1, dtype *phidot2,
+                            dtype *ker1_curr, dtype *ker2_curr,
+                            dtype *ker1_next, dtype *ker2_next) {
 
     int N = globals.N;
-    if (globals.NDIMS == 2) {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                phi1[offset2(i,j,N)] += globals.dtau * (phi1dot[offset2(i,j,N)] + 0.5f * K1[offset2(i,j,N)] * globals.dtau);
-                phi2[offset2(i,j,N)] += globals.dtau * (phi2dot[offset2(i,j,N)] + 0.5f * K2[offset2(i,j,N)] * globals.dtau);
-            }
-        }
-    }
-    if (globals.NDIMS == 3) {
-        // TODO:
+    int length = (globals.NDIMS == 3) ? (N * N * N) : (N * N);
 
-    }
-}
-
-/*
- * Performs the element wise addition:
- *  phidot1 = phidot1 + 0.5*(K1 + K1_next)*dtau
- *  phidot2 = phidot2 + 0.5*(K2 + K2_next)*dtau
- */
-void apply_kick(dtype *phi1dot, dtype *phi2dot, dtype *K1, dtype*K2, dtype *K1_next, dtype *K2_next) {
-    int N = globals.N;
-    if (globals.NDIMS == 2) {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                phi1dot[offset2(i,j,N)] += 0.5f * (K1[offset2(i,j,N)] + K1_next[offset2(i,j,N)]) * globals.dtau;
-                phi2dot[offset2(i,j,N)] += 0.5f * (K2[offset2(i,j,N)] + K2_next[offset2(i,j,N)]) * globals.dtau;
-            }
-        }
+    for (int i = 0; i < length; i++) {
+        phi1[i] += globals.dtau * (phidot1[i] + 0.5f * ker1_curr[i] * globals.dtau);
+        phi2[i] += globals.dtau * (phidot2[i] + 0.5f * ker2_curr[i] * globals.dtau);
     }
 
-    if (globals.NDIMS == 3) {
-        // TODO:
+    globals.t_evol = globals.t_evol + globals.dtau;
 
+    kernels(ker1_next, ker2_next, phi1, phi2, phidot1, phidot2);
+
+    for (int i = 0; i < length; i++) {
+        phidot1[i] += 0.5f * (ker1_curr[i] + ker1_next[i]) * globals.dtau;
+        phidot2[i] += 0.5f * (ker2_curr[i] + ker2_next[i]) * globals.dtau;
     }
 
+    for (int i = 0; i < length; i++) {
+        ker1_curr[i] = ker1_next[i];
+        ker2_curr[i] = ker2_next[i];
+    }
 }
 
 /*

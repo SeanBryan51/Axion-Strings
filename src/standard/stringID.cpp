@@ -38,9 +38,9 @@ int Cores2D(dtype *field, int thr) {
 		for (int j = 0; j < N; j++){
 
             dtype norm1 = (field[offset2(i,j,N)] + M_PI)/(2*M_PI);
-            dtype norm2 = (field[offset2(periodic(i+1,N),j,N)] + M_PI)/(2*M_PI);
-            dtype norm3 = (field[offset2(periodic(i+1,N),periodic(j+1,N),N)] + M_PI)/(2*M_PI);
-            dtype norm4 = (field[offset2(i,periodic(j+1,N),N)] + M_PI)/(2*M_PI);
+            dtype norm2 = (field[offset2(i+1,j,N)] + M_PI)/(2*M_PI);
+            dtype norm3 = (field[offset2(i+1,j+1,N)] + M_PI)/(2*M_PI);
+            dtype norm4 = (field[offset2(i,j+1,N)] + M_PI)/(2*M_PI);
 
             dtype theta1 = min(abs(norm2-norm1),1-abs(norm2-norm1));
             dtype theta2 = min(abs(norm3-norm2),1-abs(norm3-norm2));
@@ -84,19 +84,19 @@ int Cores3D(dtype *field, int thr) {
             for (int k = 0; k < N; k++) {
 
                 dtype norm1a = (field[offset3(i,j,k,N)] + M_PI)/(2*M_PI);
-                dtype norm2a = (field[offset3(periodic(i+1,N),j,k,N)] + M_PI)/(2*M_PI);
-                dtype norm3a = (field[offset3(periodic(i+1,N),periodic(j+1,N),k,N)] + M_PI)/(2*M_PI);
-                dtype norm4a = (field[offset3(i,periodic(j+1,N),k,N)] + M_PI)/(2*M_PI);
+                dtype norm2a = (field[offset3(i+1,j,k,N)] + M_PI)/(2*M_PI);
+                dtype norm3a = (field[offset3(i+1,j+1,k,N)] + M_PI)/(2*M_PI);
+                dtype norm4a = (field[offset3(i,j+1,k,N)] + M_PI)/(2*M_PI);
 
                 dtype norm1b = (field[offset3(i,j,k,N)] + M_PI)/(2*M_PI);
-                dtype norm2b = (field[offset3(periodic(i+1,N),j,k,N)] + M_PI)/(2*M_PI);
-                dtype norm3b = (field[offset3(i,periodic(j+1,N),periodic(k+1,N),N)] + M_PI)/(2*M_PI);
-                dtype norm4b = (field[offset3(i,j,periodic(k+1,N),N)] + M_PI)/(2*M_PI);
+                dtype norm2b = (field[offset3(i+1,j,k,N)] + M_PI)/(2*M_PI);
+                dtype norm3b = (field[offset3(i,j+1,k+1,N)] + M_PI)/(2*M_PI);
+                dtype norm4b = (field[offset3(i,j,k+1,N)] + M_PI)/(2*M_PI);
 
                 dtype norm1c = (field[offset3(i,j,k,N)]+M_PI)/(2*M_PI);
-                dtype norm2c = (field[offset3(i,periodic(j+1,N),k,N)]+M_PI)/(2*M_PI);
-                dtype norm3c = (field[offset3(i,periodic(j+1,N),periodic(k+1,N),N)]+M_PI)/(2*M_PI);
-                dtype norm4c = (field[offset3(i,j,periodic(k+1,N),N)]+M_PI)/(2*M_PI);
+                dtype norm2c = (field[offset3(i,j+1,k,N)]+M_PI)/(2*M_PI);
+                dtype norm3c = (field[offset3(i,j+1,k+1,N)]+M_PI)/(2*M_PI);
+                dtype norm4c = (field[offset3(i,j,k+1,N)]+M_PI)/(2*M_PI);
 
                 dtype theta1a = min(abs(norm2a-norm1a),1-abs(norm2a-norm1a));
                 dtype theta2a = min(abs(norm3a-norm2a),1-abs(norm3a-norm2a));

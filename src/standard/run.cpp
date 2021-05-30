@@ -10,19 +10,19 @@
 
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
 int should_count_strings(int tstep, int string_checks, int final_tstep);
-void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1_curr, dtype *ker2_curr, dtype *ker1_next, dtype *ker2_next, int length, int tstep);
+void debug(dtype *phi1, dtype *phi2,
+           dtype *phidot1, dtype *phidot2,
+           dtype *ker1_curr, dtype *ker2_curr,
+           dtype *ker1_next, dtype *ker2_next,
+           int length, int tstep);
 
 void run_standard() {
 
     // Allocate fields on the heap:
 
-    int length;
     assert(globals.NDIMS == 2 || globals.NDIMS == 3);
-    if (globals.NDIMS == 3) {
-        length = globals.N * globals.N * globals.N;
-    } else {
-        length = globals.N * globals.N;
-    }
+    int N = globals.N;
+    int length = (globals.NDIMS == 3) ? (N * N * N) : (N * N);
 
     dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
     dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
@@ -56,26 +56,7 @@ void run_standard() {
 
         debug(phi1, phi2, phidot1, phidot2, ker1_curr, ker2_curr, ker1_next, ker2_next, length, tstep);
 
-        // TIME EVOLUTON ALGORITHM (velocity-Verlet drift-kick algorithm, see Eq (125) TAOSTEU)
-
-        for (int i = 0; i < length; i++) {
-            phi1[i] += globals.dtau * (phidot1[i] + 0.5f * ker1_curr[i] * globals.dtau);
-            phi2[i] += globals.dtau * (phidot2[i] + 0.5f * ker2_curr[i] * globals.dtau);
-        }
-
-        globals.t_evol = globals.t_evol + globals.dtau;
-
-        kernels(ker1_next, ker2_next, phi1, phi2, phidot1, phidot2);
-
-        for (int i = 0; i < length; i++) {
-            phidot1[i] += 0.5f * (ker1_curr[i] + ker1_next[i]) * globals.dtau;
-            phidot2[i] += 0.5f * (ker2_curr[i] + ker2_next[i]) * globals.dtau;
-        }
-
-        for (int i = 0; i < length; i++) {
-            ker1_curr[i] = ker1_next[i];
-            ker2_curr[i] = ker2_next[i];
-        }
+        velocity_verlet_scheme(phi1, phi2, phidot1, phidot2, ker1_curr, ker2_curr, ker1_next, ker2_next);
 
         float kappa = log(globals.t_evol/globals.ms); // String tension (also time variable)
         float R = globals.t_evol/(globals.ms*globals.L); // Scale factor in L units
@@ -130,7 +111,12 @@ void run_standard() {
 }
 
 
-void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1_curr, dtype *ker2_curr, dtype *ker1_next, dtype *ker2_next, int length, int tstep) {
+void debug(dtype *phi1, dtype *phi2,
+           dtype *phidot1, dtype *phidot2,
+           dtype *ker1_curr, dtype *ker2_curr,
+           dtype *ker1_next, dtype *ker2_next,
+           int length, int tstep) {
+
     for (int i = 0; i < length; i++) {
         if (gsl_isnan(phi1[i])) {
             printf("NaN encountered in phi1\n");
@@ -182,6 +168,7 @@ int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
 }
 
 int should_count_strings(int tstep, int string_checks, int final_tstep) {
+    if (!globals.run_string_finding) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (string_checks - 1)) == 0;
 }

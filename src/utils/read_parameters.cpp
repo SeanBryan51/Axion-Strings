@@ -85,6 +85,11 @@ static int parameters_to_read(Parameter *parameters) {
     parameters[n_params].type = STRING;
     n_params++;
 
+    strcpy(parameters[n_params].tag, "run_string_finding");
+    parameters[n_params].addr = &globals.run_string_finding;
+    parameters[n_params].type = INT;
+    n_params++;
+
     strcpy(parameters[n_params].tag, "save_snapshots");
     parameters[n_params].addr = &globals.save_snapshots;
     parameters[n_params].type = INT;
