@@ -15,6 +15,8 @@ lambdaPRS           1.0             % Quartic coupling
 Potential           Thermal         % Choose potential. Options: 'MexicanHat' or 'Thermal'
 Era                 1.0             % era=1 for radiation domination, era=2 for early matter 
                                     % domination (in PRS trick)
+time_var            StringTension   % Options: 'StringTension', 'ConformalTime', 'CosmicTime',
+                                    % 'ScaleFactor' 
 
 save_snapshots      1
 n_snapshots         10

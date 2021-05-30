@@ -18,12 +18,17 @@ extern struct _globals {
     float lambdaPRS;
     char  Potential[MAX_LEN];
     float Era;
+    char  time_var[MAX_LEN];
 
     int   save_snapshots;
     int   n_snapshots;
     char  output_directory[MAX_LEN];
 
     unsigned int seed;
+
+    // String finding:
+    int string_checks;
+    int thr;
 
     // Independent parameters:
     // TODO: remove independent (derived) parameters and declare when we need them

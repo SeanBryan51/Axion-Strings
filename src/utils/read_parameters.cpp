@@ -80,6 +80,11 @@ static int parameters_to_read(Parameter *parameters) {
     parameters[n_params].type = FLOAT;
     n_params++;
 
+    strcpy(parameters[n_params].tag, "time_var");
+    parameters[n_params].addr = &globals.time_var;
+    parameters[n_params].type = STRING;
+    n_params++;
+
     strcpy(parameters[n_params].tag, "save_snapshots");
     parameters[n_params].addr = &globals.save_snapshots;
     parameters[n_params].type = INT;
@@ -199,6 +204,9 @@ void initialise_globals(char *parameter_file) {
     read_parameter_file(parameter_file);
 
     // Initialise the other derived independent parameters:
+
+    globals.thr = 1;
+    globals.string_checks = 40;
 
     globals.Mpl = 2.4f * 1e18 / globals.fa_phys; // Normalized to fa_phys chosen 
     globals.fa = 1.0; // In fa units

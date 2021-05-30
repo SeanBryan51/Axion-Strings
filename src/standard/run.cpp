@@ -9,6 +9,7 @@
 #include "interface.h"
 
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
+int should_count_strings(int tstep, int string_checks, int final_tstep);
 void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1_curr, dtype *ker2_curr, dtype *ker1_next, dtype *ker2_next, int length, int tstep);
 
 void run_standard() {
@@ -27,6 +28,8 @@ void run_standard() {
     dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
     dtype *phidot1 = (dtype *) calloc(length, sizeof(dtype));
     dtype *phidot2 = (dtype *) calloc(length, sizeof(dtype));
+
+    dtype *axion = (dtype *) calloc(length, sizeof(dtype));
 
     // Assert allocation was successful:
     assert(phi1 != NULL && phi2 != NULL && phidot1 != NULL && phidot2 != NULL);
@@ -53,18 +56,6 @@ void run_standard() {
 
         debug(phi1, phi2, phidot1, phidot2, ker1_curr, ker2_curr, ker1_next, ker2_next, length, tstep);
 
-        if (should_save_snapshot(tstep, globals.n_snapshots, final_step)) {
-            // file names:
-            char fname_phi1[50], fname_phi2[50];
-            sprintf(fname_phi1, "phi1-snapshot%d", n_snapshots_written);
-            sprintf(fname_phi2, "phi2-snapshot%d", n_snapshots_written);
-
-            save_data(fname_phi1, phi1, length);
-            save_data(fname_phi2, phi2, length);
-
-            n_snapshots_written++;
-        }
-
         // TIME EVOLUTON ALGORITHM (velocity-Verlet drift-kick algorithm, see Eq (125) TAOSTEU)
 
         for (int i = 0; i < length; i++) {
@@ -86,33 +77,45 @@ void run_standard() {
             ker2_curr[i] = ker2_next[i];
         }
 
+        float kappa = log(globals.t_evol/globals.ms); // String tension (also time variable)
+        float R = globals.t_evol/(globals.ms*globals.L); // Scale factor in L units
+        float time = globals.t0 * powf(R/globals.R0*globals.ms, 2.0f); // Cosmic time in L units 
 
-        // TODO: log this
-        // TIME VARIABLES 
+        if (should_count_strings(tstep, globals.string_checks, final_step)) {
 
-        // float kappa = log(globals.t_evol/globals.ms); // String tension (also time variable)
-        // float R = globals.t_evol/(globals.ms*globals.L); // Scale factor in L units
-        // float time = globals.t0 * powf(R/globals.R0*globals.ms, 2.0f); // Cosmic time in L units 
+            // compute axion field: 
+            for (int i = 0; i < length; i++) axion[i] = atan2(phi1[i], phi2[i]);
 
-        // PHYSICAL FIELDS
-        // TODO: complex numbers
-        // PHI = phi1 + 1j * phi2
-        // PHIDOT = phidot1 +1j * phidot2
-        // axiondot = (PHIDOT/PHI).imag
-        // adot_screen = saxion*axiondot
-        // axion = arctan2(phi1,phi2) 
-        // saxion = sqrt(phi1**2.0+phi2**2.0) 
+            if (globals.NDIMS == 2) {
+                int num_cores = Cores2D(axion, globals.thr);
+                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(globals.t_evol));
+                printf("%f %f",time,xi);
+            }
+            if (globals.NDIMS == 3) {
+                int num_cores = Cores3D(axion, globals.thr);
+                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(globals.t_evol));
+                printf("%f %f",time,xi);
+            }
+        }
 
-        // STRINGS  
-    
-        // Nchecks = 100
-        // to_analyse = arange(0, final_step,int(final_step/Nchecks))
-        // thr = 1 # In % value
-        // if tstep in to_analyse:
-        //     num_cores = cores_pi(axion,N,thr)
-        //     xi_2D = num_cores*time**2.0/(t_evol**2.0)
-        //     mu = pi*kappa
-        //     string_en = mu*xi_2D/time**2.0
+        if (should_save_snapshot(tstep, globals.n_snapshots, final_step)) {
+            printf("Writing snapshot %d:\n", n_snapshots_written);
+
+            // output time variables:
+            printf("  string tension = %f\n", kappa);
+            printf("  scale factor   = %f\n", R);
+            printf("  time           = %f\n", time);
+
+            // file names:
+            char fname_phi1[50], fname_phi2[50];
+            sprintf(fname_phi1, "phi1-snapshot%d", n_snapshots_written);
+            sprintf(fname_phi2, "phi2-snapshot%d", n_snapshots_written);
+
+            save_data(fname_phi1, phi1, length);
+            save_data(fname_phi2, phi2, length);
+
+            n_snapshots_written++;
+        }
     }
 
     // Free memory:
@@ -176,4 +179,9 @@ void debug(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2, dtype *ker1
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
+}
+
+int should_count_strings(int tstep, int string_checks, int final_tstep) {
+    // TODO: temporary solution
+    return tstep == 0 || tstep % (final_tstep / (string_checks - 1)) == 0;
 }

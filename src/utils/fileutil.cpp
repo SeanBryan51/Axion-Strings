@@ -20,7 +20,7 @@ void save_data(char *file_name, dtype *data, int length) {
     assert(path);
     sprintf(path, "%s/%s", globals.output_directory, file_name);
 
-    printf("Saving data... at %s\n", path);
+    printf("  Saving data... at %s\n", path);
 
     FILE *fp = fopen(path, "w");
     assert(fp != NULL);

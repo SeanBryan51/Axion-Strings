@@ -4,7 +4,7 @@
 #include "../parameters.h"
 
 // TODO: implement as a macro to avoid function overhead?
-static int periodic(int i, int N) {
+int periodic(int i, int N) {
     if (i < 0) {
         return N - (-i % N);
     } else if (i == 0) {
