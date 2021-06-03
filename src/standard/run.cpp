@@ -163,6 +163,7 @@ void debug(dtype *phi1, dtype *phi2,
 }
 
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
+    if (!globals.save_snapshots) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
 }
