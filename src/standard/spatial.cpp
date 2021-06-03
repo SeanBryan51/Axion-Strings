@@ -3,25 +3,6 @@
 #include "common.h"
 #include "../parameters.h"
 
-// Macro for periodic boundary conditions:
-#define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
-
-/*
- * Inline function for 2D array indexing:
- */
-inline int offset2(int i, int j, int N) {
-    return periodic(i,N) + N * periodic(j,N);
-}
-
-/*
- * Inline function for 3D array indexing,
- * convention is the same as fftw3:
- * http://www.fftw.org/fftw3_doc/Row_002dmajor-Format.html#Row_002dmajor-Format
- */
-inline int offset3(int i, int j, int k, int N) {
-    return (periodic(i,N) * N + periodic(j,N)) * N + periodic(k,N);
-}
-
 /*
  * Stencil coefficients:
  * https://en.wikipedia.org/wiki/Finite_difference_coefficient
