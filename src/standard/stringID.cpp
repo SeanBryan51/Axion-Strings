@@ -28,14 +28,14 @@ typedef struct vec3i {
 int Cores2D(dtype *field, int thr) {
     
     // Initialize list to push back string locations  
-	vector <vec2i> s;
+    vector <vec2i> s;
 
-	dtype accept = 0.5f - 0.5f*thr/100;
-	int count = 0;
+    dtype accept = 0.5f - 0.5f*thr/100;
+    int count = 0;
     int N = globals.N;
 
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < N; j++){
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++){
 
             dtype norm1 = (field[offset2(i,j,N)] + M_PI)/(2*M_PI);
             dtype norm2 = (field[offset2(i+1,j,N)] + M_PI)/(2*M_PI);

@@ -16,3 +16,4 @@ seed                2021
 n_snapshots         69
 output_directory    /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files
 time_var            ScaleFactor
+run_string_finding  0
