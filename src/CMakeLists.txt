@@ -13,6 +13,9 @@ target_link_options(main PUBLIC -I/usr/local/Cellar/fftw/3.3.8_2/include -L/usr/
 find_package(GSL REQUIRED)
 target_link_libraries(main GSL::gsl)
 
+find_package(OpenMP REQUIRED) 
+target_link_libraries(main OpenMP::OpenMP_CXX)
+
 # define custom libraries:
 
 add_library(
@@ -28,6 +31,7 @@ add_library(
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(standard GSL::gsl)
+target_link_libraries(standard OpenMP::OpenMP_CXX)
 target_link_libraries(main standard)
 
 add_library(
