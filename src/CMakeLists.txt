@@ -27,6 +27,7 @@ add_library(
     standard/spatial.cpp
     standard/evolve.cpp
     standard/stringID.cpp
+    standard/physics.cpp
 )
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

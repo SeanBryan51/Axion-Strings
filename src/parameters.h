@@ -1,24 +1,21 @@
 #pragma once
 
-#include <stdlib.h>
-
 #define MAX_LEN 100
 
-extern struct _globals {
+extern struct _parameters {
 
     // User defined parameters to be read from 
     // parameter file:
 
     int   NDIMS;
     int   N;
-    float Delta;
-    float DeltaRatio;
-    int   StencilOrder;
+    float space_step;
+    float time_step;
+    int   stencil_order;
     float fa_phys;
     float lambdaPRS;
-    char  Potential[MAX_LEN];
-    float Era;
-    char  time_var[MAX_LEN];
+    char  potential[MAX_LEN];
+    char  time_variable[MAX_LEN];
 
     int   save_snapshots;
     int   n_snapshots;
@@ -31,26 +28,4 @@ extern struct _globals {
     int string_checks;
     int thr;
 
-    // Independent parameters:
-    // TODO: remove independent (derived) parameters and declare when we need them
-    // for clarity?
-
-    float Mpl;
-    float fa;
-    float ms;
-    float L;
-    float Delta_tau;
-    float H1;
-
-    // Code spacings:
-    float dx;
-    float dtau;
-    float t_evol;
-    int   light_time;
-    float gstar;
-    float T0;
-    float R0;
-    float t0;
-    float meffsquared;
-
-} globals;
+} parameters;

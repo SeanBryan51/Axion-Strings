@@ -12,8 +12,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Set global variables from parameter file:
-    initialise_globals(argv[1]);
+    // Initialise global variables defined in parameters.h:
+    read_parameter_file(argv[1]);
 
     clock_t start, end;
     double cpu_time_used;

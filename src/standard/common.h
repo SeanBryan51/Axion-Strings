@@ -1,5 +1,8 @@
 #pragma once
 
+#include <gsl/gsl_math.h>
+#include "../parameters.h"
+
 #ifdef USE_DOUBLE_PRECISION
 typedef double dtype;
 #else
@@ -25,6 +28,25 @@ inline int offset3(int i, int j, int k, int N) {
     return (periodic(i,N) * N + periodic(j,N)) * N + periodic(k,N);
 }
 
+// physics.cpp
+extern float t_evol;
+extern float t_initial;
+extern float T_initial;
+extern float t_phys_initial;
+extern float R_initial;
+extern float reduced_planck_mass;
+extern float m_saxion;
+extern float g_star;
+extern float m_eff_squared;
+extern float light_crossing_time;
+void set_internal_variables();
+float physical_time(float t_conformal);
+float scale_factor(float t_conformal);
+float hubble_parameter(float t_conformal);
+float temperature(float t_conformal);
+float string_tension(float t_confomal);
+float meff_squared(float t_conformal);
+
 // evolution.cpp
 void velocity_verlet_scheme(dtype *phi1, dtype *phi2,
                             dtype *phidot1, dtype *phidot2,
@@ -37,8 +59,6 @@ void init_noise(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 
 // spatial.cpp
-// inline int offset2(int i, int j, int N);
-// inline int offset3(int i, int j, int k, int N);
 dtype laplacian2D(dtype *phi, int i, int j, float dx, int N);
 dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
 void  gradient(dtype *dphi, dtype *phi);

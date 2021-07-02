@@ -10,7 +10,7 @@
 #define MAX_TAGS 300
 #define MAX_LINE_WIDTH 200
 
-struct _globals globals;
+struct _parameters parameters;
 
 typedef enum Type {
     DOUBLE,
@@ -29,85 +29,90 @@ typedef struct Parameter {
  * Builds a list of 'parameter' objects to be read from the user
  * supplied parameter file.
  */
-static int parameters_to_read(Parameter *parameters) {
+static int parameters_to_read(Parameter *p_list) {
 
     int n_params = 0;
 
     // Add additional parameters here:
 
-    strcpy(parameters[n_params].tag, "NDIMS");
-    parameters[n_params].addr = &globals.NDIMS;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "NDIMS");
+    p_list[n_params].addr = &parameters.NDIMS;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "N");
-    parameters[n_params].addr = &globals.N;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "N");
+    p_list[n_params].addr = &parameters.N;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "Delta");
-    parameters[n_params].addr = &globals.Delta;
-    parameters[n_params].type = FLOAT;
+    strcpy(p_list[n_params].tag, "space_step");
+    p_list[n_params].addr = &parameters.space_step;
+    p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "DeltaRatio");
-    parameters[n_params].addr = &globals.DeltaRatio;
-    parameters[n_params].type = FLOAT;
+    strcpy(p_list[n_params].tag, "time_step");
+    p_list[n_params].addr = &parameters.time_step;
+    p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "StencilOrder");
-    parameters[n_params].addr = &globals.StencilOrder;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "stencil_order");
+    p_list[n_params].addr = &parameters.stencil_order;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "fa_phys");
-    parameters[n_params].addr = &globals.fa_phys;
-    parameters[n_params].type = FLOAT;
+    strcpy(p_list[n_params].tag, "fa_phys");
+    p_list[n_params].addr = &parameters.fa_phys;
+    p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "lambdaPRS");
-    parameters[n_params].addr = &globals.lambdaPRS;
-    parameters[n_params].type = FLOAT;
+    strcpy(p_list[n_params].tag, "lambdaPRS");
+    p_list[n_params].addr = &parameters.lambdaPRS;
+    p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "Potential");
-    parameters[n_params].addr = &globals.Potential;
-    parameters[n_params].type = STRING;
+    strcpy(p_list[n_params].tag, "potential");
+    p_list[n_params].addr = &parameters.potential;
+    p_list[n_params].type = STRING;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "Era");
-    parameters[n_params].addr = &globals.Era;
-    parameters[n_params].type = FLOAT;
+    strcpy(p_list[n_params].tag, "time_variable");
+    p_list[n_params].addr = &parameters.time_variable;
+    p_list[n_params].type = STRING;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "time_var");
-    parameters[n_params].addr = &globals.time_var;
-    parameters[n_params].type = STRING;
+    strcpy(p_list[n_params].tag, "run_string_finding");
+    p_list[n_params].addr = &parameters.run_string_finding;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "run_string_finding");
-    parameters[n_params].addr = &globals.run_string_finding;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "thr");
+    p_list[n_params].addr = &parameters.thr;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "save_snapshots");
-    parameters[n_params].addr = &globals.save_snapshots;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "string_checks");
+    p_list[n_params].addr = &parameters.string_checks;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "n_snapshots");
-    parameters[n_params].addr = &globals.n_snapshots;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "save_snapshots");
+    p_list[n_params].addr = &parameters.save_snapshots;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "output_directory");
-    parameters[n_params].addr = &globals.output_directory;
-    parameters[n_params].type = STRING;
+    strcpy(p_list[n_params].tag, "n_snapshots");
+    p_list[n_params].addr = &parameters.n_snapshots;
+    p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(parameters[n_params].tag, "seed");
-    parameters[n_params].addr = &globals.seed;
-    parameters[n_params].type = INT;
+    strcpy(p_list[n_params].tag, "output_directory");
+    p_list[n_params].addr = &parameters.output_directory;
+    p_list[n_params].type = STRING;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "seed");
+    p_list[n_params].addr = &parameters.seed;
+    p_list[n_params].type = INT;
     n_params++;
 
     return n_params;
@@ -123,8 +128,8 @@ static int parameters_to_read(Parameter *parameters) {
  */
 void read_parameter_file(char *fname) {
 
-    Parameter parameters[MAX_TAGS];
-    int n_params = parameters_to_read(parameters);
+    Parameter p_list[MAX_TAGS];
+    int n_params = parameters_to_read(p_list);
 
     char line[MAX_LINE_WIDTH];
     char buf1[MAX_LINE_WIDTH], buf2[MAX_LINE_WIDTH], buf3[MAX_LINE_WIDTH];
@@ -137,27 +142,27 @@ void read_parameter_file(char *fname) {
 
             int index = -1;
             for(int i = 0; i < n_params; i++) {
-                if(strcmp(buf1, parameters[i].tag) == 0) {
-                    parameters[i].tag[0] = 0; // clear parameter tag
+                if(strcmp(buf1, p_list[i].tag) == 0) {
+                    p_list[i].tag[0] = 0; // clear parameter tag
                     index = i;
                     break;
                 }
             }
 
             if(index != -1) {
-                switch (parameters[index].type) {
+                switch (p_list[index].type) {
                     case DOUBLE:
-                        *((double *) parameters[index].addr) = atof(buf2);
+                        *((double *) p_list[index].addr) = atof(buf2);
                         break;
                     case STRING:
                         assert(strlen(buf2) < MAX_LEN);
-                        strcpy((char *) parameters[index].addr, buf2);
+                        strcpy((char *) p_list[index].addr, buf2);
                         break;
                     case FLOAT:
-                        *((float *) parameters[index].addr) = (float) atof(buf2);
+                        *((float *) p_list[index].addr) = (float) atof(buf2);
                         break;
                     case INT:
-                        *((int *) parameters[index].addr) = atoi(buf2);
+                        *((int *) p_list[index].addr) = atoi(buf2);
                         break;
                 }
             } else {
@@ -171,63 +176,29 @@ void read_parameter_file(char *fname) {
 
     // Check for any missing parameters:
     for(int i = 0; i < n_params; i++) {
-        if(parameters[i].tag[0]) {
-            printf("Error. I miss a value for tag '%s' in parameter file '%s'.\n", parameters[i].tag, fname);
+        if(p_list[i].tag[0]) {
+            printf("Error. I miss a value for tag '%s' in parameter file '%s'.\n", p_list[i].tag, fname);
             exit(EXIT_FAILURE);
         }
     }
 
     // print parameter values:
     printf("Input parameters:\n");
-    parameters_to_read(parameters);
+    parameters_to_read(p_list);
     for(int i = 0; i < n_params; i++) {
-        switch (parameters[i].type) {
+        switch (p_list[i].type) {
             case DOUBLE:
-                printf("  %s %f\n", parameters[i].tag, *((double *) parameters[i].addr));
+                printf("  %s %f\n", p_list[i].tag, *((double *) p_list[i].addr));
                 break;
             case STRING:
-                printf("  %s %s\n", parameters[i].tag, (char *) parameters[i].addr);
+                printf("  %s %s\n", p_list[i].tag, (char *) p_list[i].addr);
                 break;
             case FLOAT:
-                printf("  %s %f\n", parameters[i].tag, *((float *) parameters[i].addr));
+                printf("  %s %f\n", p_list[i].tag, *((float *) p_list[i].addr));
                 break;
             case INT:
-                printf("  %s %d\n", parameters[i].tag, *((int *) parameters[i].addr));
+                printf("  %s %d\n", p_list[i].tag, *((int *) p_list[i].addr));
                 break;
         }
     }
-}
-
-/*
- * Initialises all global variables, first reading all input parameters
- * from the user supplied parameter file and then initialising all other
- * derived parameters/variables.
- */
-void initialise_globals(char *parameter_file) {
-
-    // Initialise user supplied parameters:
-    read_parameter_file(parameter_file);
-
-    // Initialise the other derived independent parameters:
-
-    globals.thr = 1;
-    globals.string_checks = 40;
-
-    globals.Mpl = 2.4f * 1e18 / globals.fa_phys; // Normalized to fa_phys chosen 
-    globals.fa = 1.0; // In fa units
-    globals.ms = sqrtf(globals.lambdaPRS) * globals.fa; // Saxion mass for PRS in ADM units
-    globals.L = globals.Delta * globals.N; // Comoving 
-    globals.Delta_tau = globals.DeltaRatio * globals.Delta;
-    globals.H1 = globals.fa / globals.Delta;
-
-    // Code spacings
-    globals.dx = globals.ms * globals.Delta;
-    globals.dtau = globals.ms * globals.Delta_tau;
-    globals.t_evol = globals.dtau / globals.DeltaRatio - globals.dtau; // Such that in the first loop iteration, t_evol = 1 
-    globals.light_time = round(0.5f * globals.N / globals.DeltaRatio);
-    globals.gstar = 106.75f;
-    globals.T0 = sqrt(globals.Mpl * 90.0f / (globals.gstar * M_PI * M_PI)); // In units of fa
-    globals.R0 = globals.Delta * globals.ms / (globals.ms * globals.L);
-    globals.t0 = globals.Delta / (2.0f * globals.L * globals.ms * globals.ms);
-    globals.meffsquared = globals.lambdaPRS * gsl_pow_2(globals.T0) / 3.0f;
 }

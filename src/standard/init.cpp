@@ -43,30 +43,30 @@ static void shift3D(fftw_complex *arr, int N) {
 void init_noise(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
-    gsl_rng_set(rng, globals.seed);
+    gsl_rng_set(rng, parameters.seed);
 
     dtype th, r;
-    if (globals.NDIMS == 2) {
-        for (int i = 0; i < globals.N; i++) {
-            for (int j = 0; j < globals.N; j++) {
+    if (parameters.NDIMS == 2) {
+        for (int i = 0; i < parameters.N; i++) {
+            for (int j = 0; j < parameters.N; j++) {
                 th = 2 * M_PI * gsl_rng_uniform(rng);
                 r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                 // Note: offset(x,y) = (x + ny * y)
-                phi1[offset2(i,j,globals.N)] = r * cosf(th);
-                phi2[offset2(i,j,globals.N)] = r * sinf(th);
-                phidot1[offset2(i,j,globals.N)] = phidot2[offset2(i,j,globals.N)] = 0;
+                phi1[offset2(i,j,parameters.N)] = r * cosf(th);
+                phi2[offset2(i,j,parameters.N)] = r * sinf(th);
+                phidot1[offset2(i,j,parameters.N)] = phidot2[offset2(i,j,parameters.N)] = 0;
             }
         }
-    } else if (globals.NDIMS == 3) {
-        for (int i = 0; i < globals.N; i++) {
-            for (int j = 0; j < globals.N; j++) {
-                for (int k = 0; k < globals.N; k++) {
+    } else if (parameters.NDIMS == 3) {
+        for (int i = 0; i < parameters.N; i++) {
+            for (int j = 0; j < parameters.N; j++) {
+                for (int k = 0; k < parameters.N; k++) {
                     th = 2 * M_PI * gsl_rng_uniform(rng);
                     r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                     // Note: offset(x,y,z) = (x * ny + y) * nz + z
-                    phi1[offset3(i,j,k,globals.N)] = r * cosf(th);
-                    phi2[offset3(i,j,k,globals.N)] = r * sinf(th);
-                    phidot1[offset3(i,j,k,globals.N)] = phidot2[offset3(i,j,k,globals.N)] = 0;
+                    phi1[offset3(i,j,k,parameters.N)] = r * cosf(th);
+                    phi2[offset3(i,j,k,parameters.N)] = r * sinf(th);
+                    phidot1[offset3(i,j,k,parameters.N)] = phidot2[offset3(i,j,k,parameters.N)] = 0;
                 }
             }
         }
@@ -75,11 +75,11 @@ void init_noise(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2) {
 
-    int length, N = globals.N;
+    int length, N = parameters.N;
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
-    gsl_rng_set(rng, globals.seed);
+    gsl_rng_set(rng, parameters.seed);
 
-    if (globals.NDIMS == 2) {
+    if (parameters.NDIMS == 2) {
         length = N * N;
 
         dtype *kx = (dtype *) calloc(N, sizeof(dtype));
@@ -104,10 +104,10 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             for (int j = 0; j < N; j++) {
 
                 dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-                dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
-                dtype bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
-                dtype amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
-                dtype amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+                dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
+                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
+                dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
                 phi_k[offset2(i,j,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
                 phi_k[offset2(i,j,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
@@ -140,7 +140,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         free(ky);
     }
 
-    if (globals.NDIMS == 3) {
+    if (parameters.NDIMS == 3) {
         length = N * N * N;
 
         dtype *kx = (dtype *) calloc(N, sizeof(dtype));
@@ -167,10 +167,10 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
                 for (int l = 0; l < N; l++) {
 
                     dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-                    dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + globals.meffsquared);
-                    dtype bose = 1.0f / (exp(omegak / globals.T0) - 1.0f);
-                    dtype amplitude = sqrt(globals.L * bose / omegak); // Power spectrum for phi
-                    dtype amplitude_dot = sqrt(globals.L * bose * omegak); // Power spectrum for phidot
+                    dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
+                    dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                    dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
+                    dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
                     phi_k[offset3(i,j,l,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
                     phi_k[offset3(i,j,l,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);

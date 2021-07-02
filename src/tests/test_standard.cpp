@@ -87,9 +87,9 @@ void test_laplacian3D() {
 }
 
 int main(void) {
-    initialise_globals((char *) "/Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/src/tests/test_parameters.param");
+    read_parameter_file((char *) "/Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/src/tests/test_parameters.param");
     // Test all stencil settings:
-    for (globals.StencilOrder = 2; globals.StencilOrder <= MAX_STENCIL; globals.StencilOrder += 2) {
+    for (parameters.stencil_order = 2; parameters.stencil_order <= MAX_STENCIL; parameters.stencil_order += 2) {
         test_laplacian2D();
         test_laplacian3D();
     }

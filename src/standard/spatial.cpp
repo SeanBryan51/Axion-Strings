@@ -11,14 +11,14 @@ dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
 
     dtype laplacian;
 
-    if (globals.StencilOrder == 2) {
+    if (parameters.stencil_order == 2) {
         laplacian = (
             (phi[offset2(i+1,j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i-1,j,N)])
           + (phi[offset2(i,j+1,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,j-1,N)])
           ) / (gsl_pow_2(dx));
     }
 
-    if (globals.StencilOrder == 4) {
+    if (parameters.stencil_order == 4) {
         // TODO:
         laplacian = 0.0f;
     }
@@ -30,7 +30,7 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
 
     dtype laplacian;
 
-    if (globals.StencilOrder == 2) {
+    if (parameters.stencil_order == 2) {
         laplacian = (
             (phi[offset3(i+1,j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)])
           + (phi[offset3(i,j+1,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j-1,k,N)])
@@ -38,7 +38,7 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
           )/gsl_pow_2(dx);
     }
 
-    if (globals.StencilOrder == 4) {
+    if (parameters.stencil_order == 4) {
         // TODO:
         laplacian = 0.0f;
     }
@@ -48,8 +48,8 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
 
 void gradient2D(dtype *dphi, dtype *phi) {
 
-    int N = globals.N;
-    if (globals.StencilOrder == 2) {
+    int N = parameters.N;
+    if (parameters.stencil_order == 2) {
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -60,7 +60,7 @@ void gradient2D(dtype *dphi, dtype *phi) {
         }
     }
 
-    if (globals.StencilOrder == 4) {
+    if (parameters.stencil_order == 4) {
         // TODO
     }
 }

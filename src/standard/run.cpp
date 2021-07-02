@@ -18,11 +18,13 @@ void debug(dtype *phi1, dtype *phi2,
 
 void run_standard() {
 
+    set_internal_variables();
+
     // Allocate fields on the heap:
 
-    assert(globals.NDIMS == 2 || globals.NDIMS == 3);
-    int N = globals.N;
-    int length = (globals.NDIMS == 3) ? (N * N * N) : (N * N);
+    assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
+    int N = parameters.N;
+    int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
 
     dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
     dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
@@ -51,35 +53,36 @@ void run_standard() {
     kernels(ker1_next, ker2_next, phi1, phi2, phidot1, phidot2);
 
     int n_snapshots_written = 0;
-    int final_step = globals.light_time - round(1 / globals.DeltaRatio) + 1;
+    int light_time = round(0.5f * parameters.N * parameters.space_step / parameters.time_step);
+    int final_step = light_time - round(1 * parameters.space_step / parameters.time_step) + 1;
     for (int tstep = 0; tstep < final_step; tstep++) {
 
         debug(phi1, phi2, phidot1, phidot2, ker1_curr, ker2_curr, ker1_next, ker2_next, length, tstep);
 
         velocity_verlet_scheme(phi1, phi2, phidot1, phidot2, ker1_curr, ker2_curr, ker1_next, ker2_next);
 
-        float kappa = log(globals.t_evol/globals.ms); // String tension (also time variable)
-        float R = globals.t_evol/(globals.ms*globals.L); // Scale factor in L units
-        float time = globals.t0 * powf(R/globals.R0*globals.ms, 2.0f); // Cosmic time in L units 
+        float kappa = string_tension(t_evol);
+        float R = scale_factor(t_evol);
+        float time = physical_time(t_evol);
 
-        if (should_count_strings(tstep, globals.string_checks, final_step)) {
+        if (should_count_strings(tstep, parameters.string_checks, final_step)) {
 
             // compute axion field: 
             for (int i = 0; i < length; i++) axion[i] = atan2(phi1[i], phi2[i]);
 
-            if (globals.NDIMS == 2) {
-                int num_cores = Cores2D(axion, globals.thr);
-                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(globals.t_evol));
+            if (parameters.NDIMS == 2) {
+                int num_cores = Cores2D(axion, parameters.thr);
+                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
                 printf("%f %f",time,xi);
             }
-            if (globals.NDIMS == 3) {
-                int num_cores = Cores3D(axion, globals.thr);
-                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(globals.t_evol));
+            if (parameters.NDIMS == 3) {
+                int num_cores = Cores3D(axion, parameters.thr);
+                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
                 printf("%f %f",time,xi);
             }
         }
 
-        if (should_save_snapshot(tstep, globals.n_snapshots, final_step)) {
+        if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
             printf("Writing snapshot %d:\n", n_snapshots_written);
 
             // output time variables:
@@ -163,13 +166,13 @@ void debug(dtype *phi1, dtype *phi2,
 }
 
 int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
-    if (!globals.save_snapshots) return 0;
+    if (!parameters.save_snapshots) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
 }
 
 int should_count_strings(int tstep, int string_checks, int final_tstep) {
-    if (!globals.run_string_finding) return 0;
+    if (!parameters.run_string_finding) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (string_checks - 1)) == 0;
 }

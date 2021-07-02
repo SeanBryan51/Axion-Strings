@@ -16,9 +16,9 @@ void read_ic_file(dtype * phi1, dtype * phidot1, dtype * phi2, dtype * phidot2, 
 
 void save_data(char *file_name, dtype *data, int length) {
 
-    char *path = (char *) alloca(sizeof(globals.output_directory) + sizeof(file_name) + 1);
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
     assert(path);
-    sprintf(path, "%s/%s", globals.output_directory, file_name);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
 
     printf("  Saving data... at %s\n", path);
 
