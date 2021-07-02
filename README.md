@@ -24,6 +24,6 @@ make
 
 ## How to add new parameters to the parameter file:
 
-1. add parameter to the ```globals``` struct in parameters.h.
-2. add entry to the ```parameters``` array in ```parameters_to_read()``` in utils/read_parameter_file.cpp
+1. add parameter to the ```parameters``` struct in parameters.h.
+2. add entry to the ```p_list``` array in ```parameters_to_read()``` in utils/read_parameter_file.cpp
 3. add parameter to parameter file.
