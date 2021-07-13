@@ -8,6 +8,9 @@ project(
     LANGUAGES CXX
 )
 
+# compiler sanity check
+message("M E S S A G E  > Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

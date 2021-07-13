@@ -4,7 +4,6 @@ NDIMS               2
 N                   256
 space_step          1.0
 time_step           0.3333333333
-stencil_order       2
 fa_phys             1e12
 lambdaPRS           1.0
 potential           Thermal
@@ -18,3 +17,5 @@ time_variable       ScaleFactor
 run_string_finding  0
 thr                 1
 string_checks       40
+use_coeff_matrix    0
+coeff_matrix_path   /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/coefficient_matrix_files/coefficient_mat_2D_N256.mtx

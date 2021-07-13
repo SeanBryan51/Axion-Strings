@@ -4,10 +4,6 @@
 #include <assert.h>
 
 #include "standard/common.h"
-#include "utils/utils.h"
-#include "parameters.h"
-
-#define MAX_STENCIL 2
 
 int is_equal(dtype x, dtype y, dtype tolerance) {
     assert(tolerance > 0.0f);
@@ -87,11 +83,9 @@ void test_laplacian3D() {
 }
 
 int main(void) {
-    read_parameter_file((char *) "/Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/src/tests/test_parameters.param");
-    // Test all stencil settings:
-    for (parameters.stencil_order = 2; parameters.stencil_order <= MAX_STENCIL; parameters.stencil_order += 2) {
-        test_laplacian2D();
-        test_laplacian3D();
-    }
+
+    test_laplacian2D();
+    test_laplacian3D();
+
     return EXIT_SUCCESS;
 }

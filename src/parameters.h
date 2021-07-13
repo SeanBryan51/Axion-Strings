@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_LEN 100
+#define MAX_LEN 200
 
 extern struct _parameters {
 
@@ -11,7 +11,10 @@ extern struct _parameters {
     int   N;
     float space_step;
     float time_step;
-    int   stencil_order;
+
+    int   use_coeff_matrix;
+    char  coeff_matrix_path[MAX_LEN];
+
     float fa_phys;
     float lambdaPRS;
     char  potential[MAX_LEN];

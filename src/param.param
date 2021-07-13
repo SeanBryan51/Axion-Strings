@@ -7,14 +7,16 @@ NDIMS               2 % Number of dimensions
 N                   256             % Number of grid points
 space_step          1.0             % Space step in dimensionless program units (default space_step=1)
 time_step           0.3333333333    % Time step in dimensionless program units
-stencil_order       2               % Choose order accuracy in dx for spatial derivative 
-                                    % calculations. Options: StencilOrder = 2,4,6
+
+use_coeff_matrix    0
+coeff_matrix_path   /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/coefficient_matrix_files/coefficient_mat_2D_N256.mtx
+
 fa_phys             1e12            % Physical value of fa in GeV
 lambdaPRS           1.0             % Quartic coupling 
 potential           Thermal         % Choose potential. Options: 'MexicanHat' or 'Thermal'
 time_variable       StringTension   % Options: 'StringTension', 'ConformalTime', 'CosmicTime',
                                     % 'ScaleFactor' 
-run_string_finding  0
+run_string_finding  1
 thr                 1
 string_checks       40
 

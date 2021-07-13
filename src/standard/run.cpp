@@ -20,6 +20,9 @@ void run_standard() {
 
     set_internal_variables();
 
+    if (parameters.use_coeff_matrix) set_coefficient_matrix(parameters.coeff_matrix_path, &coefficient_matrix);
+    else build_coefficient_matrix(&coefficient_matrix, parameters.NDIMS, parameters.N);
+
     // Allocate fields on the heap:
 
     assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
@@ -73,12 +76,12 @@ void run_standard() {
             if (parameters.NDIMS == 2) {
                 int num_cores = Cores2D(axion, parameters.thr);
                 float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
-                printf("%f %f",time,xi);
+                printf("%f %f\n",time,xi);
             }
             if (parameters.NDIMS == 3) {
                 int num_cores = Cores3D(axion, parameters.thr);
                 float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
-                printf("%f %f",time,xi);
+                printf("%f %f\n",time,xi);
             }
         }
 
