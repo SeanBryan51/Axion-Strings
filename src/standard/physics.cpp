@@ -1,6 +1,5 @@
-#include <gsl/gsl_math.h>
-
 #include "common.h"
+#include "../parameters.h"
 
 float t_evol;
 float t_initial;
@@ -34,7 +33,7 @@ void set_internal_variables() {
     T_initial = 4.0f;
 
     // Initial physical time.
-    // TODO: why is t0 = t_phys_initial defined as parameters.Delta / (2.0f * parameters.L * parameters.ms * parameters.ms) ?
+    // TODO: why is t0 = t_phys_initial defined as Delta / (2.0f * L * ms * ms) ?
     t_phys_initial = 1.0f / (2.0f * parameters.N * m_saxion * m_saxion);
 
     // Initial scale factor.

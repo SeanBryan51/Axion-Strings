@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <gsl/gsl_math.h>
 
 #include "mkl_spblas.h"
@@ -52,17 +53,17 @@ inline void coordinate3(int *i, int *j, int *k, int offset, int N) {
 }
 
 // physics.cpp
-extern float t_evol;
-extern float t_initial;
-extern float T_initial;
-extern float t_phys_initial;
-extern float R_initial;
-extern float reduced_planck_mass;
-extern float m_saxion;
-extern float g_star;
-extern float m_eff_squared;
-extern float light_crossing_time;
-void set_internal_variables();
+extern float t_evol;                // Dimensionless program time variable (in conformal time).
+extern float t_initial;             // Initial conformal time.
+extern float T_initial;             // Initial temperature in units of f_a. Defined when H ~ f_a
+extern float t_phys_initial;        // Initial physical time.
+extern float R_initial;             // Initial scale factor.
+extern float reduced_planck_mass;   // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
+extern float m_saxion;              // Saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
+extern float g_star;                // Relativistic degrees of freedom: 
+extern float m_eff_squared;         // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
+extern float light_crossing_time;   // Light crossing time: approximate time for light to travel one Hubble volume.
+void  set_internal_variables();
 float physical_time(float t_conformal);
 float scale_factor(float t_conformal);
 float hubble_parameter(float t_conformal);

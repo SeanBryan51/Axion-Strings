@@ -42,31 +42,32 @@ static void shift3D(fftw_complex *arr, int N) {
  */
 void init_noise(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
+    int N = parameters.N;
     gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
     gsl_rng_set(rng, parameters.seed);
 
     dtype th, r;
     if (parameters.NDIMS == 2) {
-        for (int i = 0; i < parameters.N; i++) {
-            for (int j = 0; j < parameters.N; j++) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
                 th = 2 * M_PI * gsl_rng_uniform(rng);
                 r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                 // Note: offset(x,y) = (x + ny * y)
-                phi1[offset2(i,j,parameters.N)] = r * cosf(th);
-                phi2[offset2(i,j,parameters.N)] = r * sinf(th);
-                phidot1[offset2(i,j,parameters.N)] = phidot2[offset2(i,j,parameters.N)] = 0;
+                phi1[offset2(i,j,N)] = r * cosf(th);
+                phi2[offset2(i,j,N)] = r * sinf(th);
+                phidot1[offset2(i,j,N)] = phidot2[offset2(i,j,N)] = 0;
             }
         }
     } else if (parameters.NDIMS == 3) {
-        for (int i = 0; i < parameters.N; i++) {
-            for (int j = 0; j < parameters.N; j++) {
-                for (int k = 0; k < parameters.N; k++) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                for (int k = 0; k < N; k++) {
                     th = 2 * M_PI * gsl_rng_uniform(rng);
                     r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
                     // Note: offset(x,y,z) = (x * ny + y) * nz + z
-                    phi1[offset3(i,j,k,parameters.N)] = r * cosf(th);
-                    phi2[offset3(i,j,k,parameters.N)] = r * sinf(th);
-                    phidot1[offset3(i,j,k,parameters.N)] = phidot2[offset3(i,j,k,parameters.N)] = 0;
+                    phi1[offset3(i,j,k,N)] = r * cosf(th);
+                    phi2[offset3(i,j,k,N)] = r * sinf(th);
+                    phidot1[offset3(i,j,k,N)] = phidot2[offset3(i,j,k,N)] = 0;
                 }
             }
         }
@@ -84,6 +85,8 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
 
         dtype *kx = (dtype *) calloc(N, sizeof(dtype));
         dtype *ky = (dtype *) calloc(N, sizeof(dtype));
+
+        assert(kx != NULL && ky != NULL);
 
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = - N / 2.0f + i;
@@ -106,6 +109,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
                 dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
                 dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
                 dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                // TODO: okay to remove L normalisation inside sqrt?
                 dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
                 dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
@@ -147,6 +151,8 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         dtype *ky = (dtype *) calloc(N, sizeof(dtype));
         dtype *kz = (dtype *) calloc(N, sizeof(dtype));
 
+        assert(kx != NULL && ky != NULL && kz != NULL);
+
         for(int i = 0; i < N; i++) {
             kx[i] = ky[i] = kz[i] = - N / 2.0f + i;
         }
@@ -169,6 +175,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
                     dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
                     dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
                     dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                    // TODO: okay to remove L normalisation inside sqrt?
                     dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
                     dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 

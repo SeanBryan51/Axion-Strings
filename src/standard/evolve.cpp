@@ -15,19 +15,20 @@ void velocity_verlet_scheme(dtype *phi1, dtype *phi2,
 
     int N = parameters.N;
     int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
+    float dt = parameters.time_step;
 
     for (int i = 0; i < length; i++) {
-        phi1[i] += parameters.time_step * (phidot1[i] + 0.5f * ker1_curr[i] * parameters.time_step);
-        phi2[i] += parameters.time_step * (phidot2[i] + 0.5f * ker2_curr[i] * parameters.time_step);
+        phi1[i] += dt * (phidot1[i] + 0.5f * ker1_curr[i] * dt);
+        phi2[i] += dt * (phidot2[i] + 0.5f * ker2_curr[i] * dt);
     }
 
-    t_evol = t_evol + parameters.time_step;
+    t_evol = t_evol + dt;
 
     kernels(ker1_next, ker2_next, phi1, phi2, phidot1, phidot2);
 
     for (int i = 0; i < length; i++) {
-        phidot1[i] += 0.5f * (ker1_curr[i] + ker1_next[i]) * parameters.time_step;
-        phidot2[i] += 0.5f * (ker2_curr[i] + ker2_next[i]) * parameters.time_step;
+        phidot1[i] += 0.5f * (ker1_curr[i] + ker1_next[i]) * dt;
+        phidot2[i] += 0.5f * (ker2_curr[i] + ker2_next[i]) * dt;
     }
 
     for (int i = 0; i < length; i++) {

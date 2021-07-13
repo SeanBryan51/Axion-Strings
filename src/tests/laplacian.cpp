@@ -15,6 +15,7 @@ void test_laplacian2D() {
     // success case: simple array of zeros
     int N = 128;
     dtype *phi = (dtype *) calloc(N * N, sizeof(dtype));
+    assert(phi != NULL);
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             assert(is_equal(laplacian2D(phi, i, j, 1.0f, N), 0.0f, 1e-30f));
@@ -25,6 +26,7 @@ void test_laplacian2D() {
     // success case: wave with periodic boundary conditions
     N = 256;
     phi = (dtype *) calloc(N * N, sizeof(dtype));
+    assert(phi != NULL);
     dtype L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -48,6 +50,7 @@ void test_laplacian3D() {
     // success case: simple array of zeros
     int N = 128;
     dtype *phi = (dtype *) calloc(N * N * N, sizeof(dtype));
+    assert(phi != NULL);
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -60,6 +63,7 @@ void test_laplacian3D() {
     // success case: wave with periodic boundary conditions
     N = 256;
     phi = (dtype *) calloc(N * N * N, sizeof(dtype));
+    assert(phi != NULL);
     dtype L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {

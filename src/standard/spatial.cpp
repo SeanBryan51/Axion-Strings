@@ -45,6 +45,8 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         cols = (int *) calloc(num_bands * length, sizeof(MKL_INT));
         values = (dtype *) calloc(num_bands * length, sizeof(dtype));
 
+        assert(rows != NULL && cols != NULL && values != NULL);
+
         // "fill in" coefficient matrix in COO format:
         for (int i = 0; i < length; i++) {
 
@@ -93,42 +95,51 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         cols = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
         values = (dtype *) calloc(num_bands * length, sizeof(dtype));
 
+        assert(rows != NULL && cols != NULL && values != NULL);
+
         // "fill in" coefficient matrix in COO format:
         for (int i = 0; i < length; i++) {
 
             int x, y, z;
             coordinate3(&x, &y, &z, i, N);
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x,y,z,N);
             values[nnz] = -6.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x+1,y,z,N);
             values[nnz] = 1.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x-1,y,z,N);
             values[nnz] = 1.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x,y+1,z,N);
             values[nnz] = 1.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x,y-1,z,N);
             values[nnz] = 1.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x,y,z+1,N);
             values[nnz] = 1.0f;
             nnz++;
 
+            assert(nnz < num_bands * length);
             rows[nnz] = i;
             cols[nnz] = offset3(x,y,z-1,N);
             values[nnz] = 1.0f;

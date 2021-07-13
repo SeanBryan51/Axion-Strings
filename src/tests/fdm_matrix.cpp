@@ -116,6 +116,7 @@ void test_fdm_matrix2D() {
     N = 128;
     phi = (dtype *) calloc(N * N, sizeof(dtype));
     laplacian = (dtype *) calloc(N * N, sizeof(dtype));
+    assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 2, N);
 
     status = mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mat, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, phi, 0.0f, laplacian);
@@ -137,6 +138,7 @@ void test_fdm_matrix2D() {
     N = 256;
     phi = (dtype *) calloc(N * N, sizeof(dtype));
     laplacian = (dtype *) calloc(N * N, sizeof(dtype));
+    assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 2, N);
 
     dtype L = N / 2.0f;
@@ -180,6 +182,7 @@ void test_fdm_matrix3D() {
     N = 128;
     phi = (dtype *) calloc(N * N * N, sizeof(dtype));
     laplacian = (dtype *) calloc(N * N * N, sizeof(dtype));
+    assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 3, N);
 
     status = mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mat, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, phi, 0.0f, laplacian);
@@ -201,6 +204,7 @@ void test_fdm_matrix3D() {
     N = 256;
     phi = (dtype *) calloc(N * N * N, sizeof(dtype));
     laplacian = (dtype *) calloc(N * N * N, sizeof(dtype));
+    assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 3, N);
 
     dtype L = N / 2.0f;

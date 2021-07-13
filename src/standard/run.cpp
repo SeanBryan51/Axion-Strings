@@ -18,16 +18,17 @@ void debug(dtype *phi1, dtype *phi2,
 
 void run_standard() {
 
+    assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
+
+    int N = parameters.N;
+    int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
+
     set_internal_variables();
 
     if (parameters.use_coeff_matrix) set_coefficient_matrix(parameters.coeff_matrix_path, &coefficient_matrix);
     else build_coefficient_matrix(&coefficient_matrix, parameters.NDIMS, parameters.N);
 
     // Allocate fields on the heap:
-
-    assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
-    int N = parameters.N;
-    int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
 
     dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
     dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
