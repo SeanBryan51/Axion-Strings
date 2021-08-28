@@ -20,7 +20,7 @@ void set_internal_variables() {
     // Saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
     m_saxion = sqrtf(parameters.lambdaPRS);
 
-    // Relativistic degrees of freedom: 
+    // Relativistic degrees of freedom:
     g_star = 106.75f;
 
     // Initial conformal time.
@@ -53,7 +53,9 @@ void set_internal_variables() {
 
 float physical_time(float t_conformal) {
     // float time = parameters.t0 * powf(R/parameters.R0*parameters.ms, 2.0f); // Cosmic time in L units 
-    return t_phys_initial * powf(t_conformal/t_initial, 2.0f);
+    float R = scale_factor(t_conformal);
+    return t_phys_initial * powf(R/R_initial*m_saxion, 2.0f); // Cosmic time in L units
+    // return t_phys_initial * powf(t_conformal/t_initial, 2.0f);
 }
 
 float scale_factor(float t_conformal) {
@@ -61,7 +63,8 @@ float scale_factor(float t_conformal) {
     // linearly with conformal time.
     // TODO: ask Giovanni about why scale factor is defined as
     // return t_conformal/(parameters.ms*parameters.L); // Scale factor in L units
-    return R_initial * (t_conformal / t_initial);
+    return t_conformal/(m_saxion*parameters.N*parameters.space_step); // Scale factor in L units
+    // return R_initial * (t_conformal / t_initial);
 }
 
 float hubble_parameter(float t_conformal) {
