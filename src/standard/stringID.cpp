@@ -114,7 +114,7 @@ int Cores3D(dtype *field, int thr) {
                 dtype theta_sum_b = theta1b + theta2b + theta3b;
                 dtype theta_sum_c = theta1c + theta2c + theta3c;
                 
-                if (theta_sum_a || theta_sum_b || theta_sum_c > accept){
+                if (theta_sum_a > accept|| theta_sum_b > accept|| theta_sum_c > accept){
                     s.push_back((vec3i) {i,j,k});
                 }
             }
