@@ -6,6 +6,7 @@
 #include <gsl/gsl_math.h>
 
 #include "mkl_spblas.h"
+#include "../parameters.h"
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double dtype;
@@ -15,6 +16,30 @@ typedef float dtype;
 
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
+
+// Mega struct containing all the pointers to large arrays/solution vectors:
+// TODO: add coefficient matrix
+typedef struct _all_data {
+    dtype *phi1; // phi_1 field values
+    dtype *phi2; // phi_2 field values
+    dtype *phidot1; // phi_1 time derivative
+    dtype *phidot2; // phi_2 time derivative
+    dtype *ker1_curr; // current kernel for phi_1 equation of motion
+    dtype *ker2_curr; // current kernel for phi_2 equation of motion
+    dtype *ker1_next; // next kernel for phi_1 equation of motion
+    dtype *ker2_next; // next kernel for phi_2 equation of motion
+    // dtype *dvdphi1; // potential term in phi_1 equation of motion
+    // dtype *dvdphi2; // potential term in phi_2 equation of motion
+    dtype *axion; // axion field values
+    dtype *saxion; // saxion field values
+} all_data;
+
+/*
+ * Returns length of solution vector:
+ */
+inline int get_length() {
+    return (parameters.NDIMS == 3) ? (parameters.N * parameters.N * parameters.N) : (parameters.N * parameters.N);
+}
 
 /*
  * Inline function for 2D array indexing:
@@ -72,13 +97,12 @@ float string_tension(float t_confomal);
 float meff_squared(float t_conformal);
 
 // evolution.cpp
-void velocity_verlet_scheme(dtype *phi1, dtype *phi2,
-                            dtype *phidot1, dtype *phidot2,
-                            dtype *ker1_curr, dtype *ker2_curr,
-                            dtype *ker1_next, dtype *ker2_next);
-void kernels(dtype *K1, dtype *K2, dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2);
+void velocity_verlet_scheme(all_data data);
+void kernels(dtype *ker1, dtype *ker2, all_data data);
 
 // init.cpp
+void initialise_everything(all_data *data);
+void free_all_data(all_data data);
 void init_noise(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 
@@ -95,5 +119,18 @@ int Cores2D(dtype *field, int thr);
 int Cores3D(dtype *field, int thr);
 
 // mkl_wrapper.cpp
-sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A, const sparse_index_base_t indexing, const MKL_INT rows, const MKL_INT cols, const MKL_INT nnz, MKL_INT *row_indx, MKL_INT * col_indx, dtype *values);
-sparse_status_t mkl_wrapper_sparse_mv (const sparse_operation_t operation, const dtype alpha, const sparse_matrix_t A, const struct matrix_descr descr, const dtype *x, const dtype beta, dtype *y);
+sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,
+                                               const sparse_index_base_t indexing,
+                                               const MKL_INT rows,
+                                               const MKL_INT cols,
+                                               const MKL_INT nnz,
+                                               MKL_INT *row_indx,
+                                               MKL_INT * col_indx,
+                                               dtype *values);
+sparse_status_t mkl_wrapper_sparse_mv (const sparse_operation_t operation,
+                                       const dtype alpha,
+                                       const sparse_matrix_t A,
+                                       const struct matrix_descr descr,
+                                       const dtype *x,
+                                       const dtype beta,
+                                       dtype *y);

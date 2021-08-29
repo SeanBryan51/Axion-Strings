@@ -1,6 +1,5 @@
 #include "common.h"
-#include "../parameters.h"
-#include "../utils/utils.h"
+#include "utils/utils.h"
 
 #include <assert.h>
 

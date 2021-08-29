@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
     // Initialise global variables defined in parameters.h:
     read_parameter_file(argv[1]);
 
+    // TODO: parameter sanity checks
+
     clock_t start, end;
     double cpu_time_used;
 

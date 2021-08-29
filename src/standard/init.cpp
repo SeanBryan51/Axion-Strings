@@ -7,7 +7,6 @@
 #include <gsl/gsl_math.h>
 #include <fftw3.h>
 
-#include "../parameters.h"
 #include "common.h"
 
 /*
@@ -34,6 +33,81 @@ static void shift3D(fftw_complex *arr, int N) {
             }
         }
     }
+}
+
+/* 
+ * Does the following:
+ * 1. Allocates memory for solution vectors in all_data struct.
+ * 2. Initialises physical parameters defined in physics.cpp.
+ */
+void initialise_everything(all_data *data) {
+
+    int N = parameters.N;
+    int length = get_length();
+
+    // TOOD: remove set coefficient matrix functionality (stupid)
+    if (parameters.use_coeff_matrix) set_coefficient_matrix(parameters.coeff_matrix_path, &coefficient_matrix);
+    else build_coefficient_matrix(&coefficient_matrix, parameters.NDIMS, parameters.N);
+
+    // Initialise physical parameters:
+    set_internal_variables();
+
+    // Allocate fields on the heap:
+
+    dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phidot1 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *phidot2 = (dtype *) calloc(length, sizeof(dtype));
+
+    // Assert allocation was successful:
+    assert(phi1 != NULL && phi2 != NULL && phidot1 != NULL && phidot2 != NULL);
+
+    // Initialise fields:
+    // TODO: remove init_noise()
+    // init_noise(phi1, phi2, phidot1, phidot2);
+    gaussian_thermal(phi1, phi2, phidot1, phidot2);
+
+    // Allocate field kernels on the heap:
+    dtype *ker1_curr = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker2_curr = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker1_next = (dtype *) calloc(length, sizeof(dtype));
+    dtype *ker2_next = (dtype *) calloc(length, sizeof(dtype));
+
+    // Assert allocation was successful:
+    assert(ker1_curr != NULL && ker2_curr != NULL && ker1_next != NULL && ker2_next != NULL);
+
+    dtype *axion = NULL;
+    if (parameters.run_string_finding) axion = (dtype *) calloc(length, sizeof(dtype));
+
+    dtype *saxion = NULL;
+
+    data->phi1 = phi1;
+    data->phi2 = phi2;
+    data->phidot1 = phidot1;
+    data->phidot2 = phidot2;
+    data->ker1_curr = ker1_curr;
+    data->ker2_curr = ker2_curr;
+    data->ker1_next = ker1_next;
+    data->ker2_next = ker2_next;
+    data->axion = axion;
+    data->saxion = saxion;
+
+    // Initialise kernels for the next time step:
+    kernels(data->ker1_next, data->ker2_next, *data);
+}
+
+/*
+ * Free memory allocated in all_data struct.
+ */
+void free_all_data(all_data data) {
+    free(data.phi1);
+    free(data.phi2);
+    free(data.phidot1);
+    free(data.phidot2);
+    free(data.ker1_curr);
+    free(data.ker2_curr);
+    free(data.ker1_next);
+    free(data.ker2_next);
 }
 
 /*

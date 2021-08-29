@@ -10,7 +10,6 @@ using namespace std;
 // External modules 
 
 #include "common.h"
-#include "../parameters.h"
 
 typedef struct vec2i {
     int x;

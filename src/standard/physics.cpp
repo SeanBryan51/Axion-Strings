@@ -1,5 +1,4 @@
 #include "common.h"
-#include "../parameters.h"
 
 float t_evol;
 float t_initial;
@@ -12,6 +11,9 @@ float g_star;
 float m_eff_squared;
 float light_crossing_time;
 
+/*
+ * Initialise all physical parameters / constants.
+ */
 void set_internal_variables() {
 
     // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
