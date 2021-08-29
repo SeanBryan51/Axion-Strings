@@ -27,9 +27,9 @@ void run_standard() {
 
         velocity_verlet_scheme(data);
 
-        float kappa = string_tension(t_evol);
-        float R = scale_factor(t_evol);
-        float time = physical_time(t_evol);
+        float kappa = string_tension(tau);
+        float time = physical_time(tau);
+        float Hinv = 1.0f / hubble_parameter(tau);
 
         if (should_count_strings(tstep, parameters.string_checks, final_step)) {
 
@@ -38,12 +38,13 @@ void run_standard() {
 
             if (parameters.NDIMS == 2) {
                 int num_cores = Cores2D(data.axion, parameters.thr);
-                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
-                printf("%f %f\n",time,xi);
+                float xi = num_cores * gsl_pow_2(time / tau);
+                // printf("%f %f\n",time,xi);
+                printf("%f %f\n",Hinv,xi);
             }
             if (parameters.NDIMS == 3) {
                 int num_cores = Cores3D(data.axion, parameters.thr);
-                float xi = num_cores * gsl_pow_2(time)/(gsl_pow_2(t_evol));
+                float xi = num_cores * gsl_pow_2(time / tau);
                 printf("%f %f\n",time,xi);
             }
         }
@@ -53,7 +54,6 @@ void run_standard() {
 
             // output time variables:
             printf("  string tension = %f\n", kappa);
-            printf("  scale factor   = %f\n", R);
             printf("  time           = %f\n", time);
 
             // file names:

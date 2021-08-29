@@ -1,7 +1,7 @@
 #include "common.h"
 
-float t_evol;
-float t_initial;
+float tau;
+float tau_initial;
 float T_initial;
 float t_phys_initial;
 float R_initial;
@@ -15,6 +15,7 @@ float light_crossing_time;
  * Initialise all physical parameters / constants.
  */
 void set_internal_variables() {
+    // TODO: okay there are a tonne of magic variables here which have NO INFLUENCE ON THE DYNAMICS
 
     // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
     reduced_planck_mass = 2.4f * 1e18 / parameters.fa_phys;
@@ -26,7 +27,7 @@ void set_internal_variables() {
     g_star = 106.75f;
 
     // Initial conformal time.
-    t_initial = parameters.space_step - parameters.time_step;
+    tau_initial = 1.0f - parameters.time_step;
 
     // Initial temperature in units of f_a. Defined when H ~ f_a
     // T_initial = powf(90.0f * gsl_pow_2(reduced_planck_mass) / (g_star * M_PI * M_PI), 0.25f);
@@ -41,7 +42,8 @@ void set_internal_variables() {
     // Initial scale factor.
     // TODO: should R0 = R_initial be (Delta * ms / (ms * L)) = 1 / N 
     // or (1.0 / sqrtf(parameters.fa_phys / m_saxion)) ?
-    R_initial = 1.0f / parameters.N;
+    // R_initial = 1.0f / parameters.N;
+    R_initial = tau_initial;
 
     // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
     m_eff_squared = parameters.lambdaPRS * (gsl_pow_2(T_initial) / 3.0f - 1.0f);
@@ -50,14 +52,17 @@ void set_internal_variables() {
     light_crossing_time = 0.5f * parameters.N * parameters.space_step;
 
     // Dimensionless program time variable (in conformal time).
-    t_evol = t_initial;
+    tau = tau_initial;
 }
 
+/*
+ * Physical time in program units.
+ */
 float physical_time(float t_conformal) {
     // float time = parameters.t0 * powf(R/parameters.R0*parameters.ms, 2.0f); // Cosmic time in L units 
-    float R = scale_factor(t_conformal);
-    return t_phys_initial * powf(R/R_initial*m_saxion, 2.0f); // Cosmic time in L units
-    // return t_phys_initial * powf(t_conformal/t_initial, 2.0f);
+    // float R = scale_factor(t_conformal);
+    // return t_phys_initial * powf(R/R_initial*m_saxion, 2.0f); // Cosmic time in L units
+    return 1.0f / 2.0f * (gsl_pow_2(t_conformal) - gsl_pow_2(tau_initial)) + t_phys_initial; // Found from integratating definition of dimensionless tau.
 }
 
 float scale_factor(float t_conformal) {
@@ -65,17 +70,22 @@ float scale_factor(float t_conformal) {
     // linearly with conformal time.
     // TODO: ask Giovanni about why scale factor is defined as
     // return t_conformal/(parameters.ms*parameters.L); // Scale factor in L units
-    return t_conformal/(m_saxion*parameters.N*parameters.space_step); // Scale factor in L units
-    // return R_initial * (t_conformal / t_initial);
+    // return t_conformal/(m_saxion*parameters.N*parameters.space_step); // Scale factor in L units
+    return t_conformal;
 }
 
+/*
+ * Dimensionless Hubble parameter: \tilde{H} \equiv H / f_a
+ */
 float hubble_parameter(float t_conformal) {
-    // TODO: need to choose a initial reference value for the Hubble parameter at t_evol = t_initial
-    return 0.0f;
+    return M_PI / (3.0f * reduced_planck_mass) * sqrtf(g_star / 10.0f) * gsl_pow_2(temperature(t_conformal));
 }
 
+/*
+ * Temperature in units of f_a.
+ */
 float temperature(float t_conformal) {
-    return T_initial / (t_conformal / t_initial);
+    return T_initial / (t_conformal / tau_initial);
 }
 
 float string_tension(float t_conformal) {

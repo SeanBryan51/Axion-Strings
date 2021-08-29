@@ -1,7 +1,5 @@
 #include "common.h"
 
-#include "mkl.h"
-
 /*
  * Velocity-Verlet time evolution algorithm, see equation (125)
  * in arXiv:2006.15122v2 'The art of simulating the early
@@ -19,7 +17,7 @@ void velocity_verlet_scheme(all_data data) {
         data.phi2[i] += dt * (data.phidot2[i] + 0.5f * data.ker2_curr[i] * dt);
     }
 
-    t_evol = t_evol + dt;
+    tau = tau + dt;
 
     kernels(data.ker1_next, data.ker2_next, data);
 
@@ -36,8 +34,8 @@ void velocity_verlet_scheme(all_data data) {
 
 /*
  * Performs the following element-wise addition to compute the kernel given the fields:
- *  K1 = Laplacian(phi1,dx,N) - 2*(Era/t_evol)*phidot1 - lambdaPRS*phi1*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*t_evol**2.0))
- *  K2 = Laplacian(phi2,dx,N) - 2*(Era/t_evol)*phidot2 - lambdaPRS*phi2*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*t_evol**2.0))
+ *  K1 = Laplacian(phi1,dx,N) - 2*(Era/tau)*phidot1 - lambdaPRS*phi1*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*tau**2.0))
+ *  K2 = Laplacian(phi2,dx,N) - 2*(Era/tau)*phidot2 - lambdaPRS*phi2*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*tau**2.0))
  */
 void kernels(dtype *ker1, dtype *ker2, all_data data) {
 
@@ -50,15 +48,15 @@ void kernels(dtype *ker1, dtype *ker2, all_data data) {
     mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, ker2);
 
     for (int i = 0; i < length; i++) {
-        ker1[i] = ker1[i] - 2.0f / t_evol * data.phidot1[i]
+        ker1[i] = ker1[i] - 2.0f / tau * data.phidot1[i]
                           - parameters.lambdaPRS * data.phi1[i] * (
                               gsl_pow_2(data.phi1[i]) + gsl_pow_2(data.phi2[i]) - 1
-                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(t_evol / t_initial))
+                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(tau / tau_initial))
                           );
-        ker2[i] = ker2[i] - 2.0f / t_evol * data.phidot2[i]
+        ker2[i] = ker2[i] - 2.0f / tau * data.phidot2[i]
                           - parameters.lambdaPRS * data.phi2[i] * (
                               gsl_pow_2(data.phi1[i]) + gsl_pow_2(data.phi2[i]) - 1
-                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(t_evol / t_initial))
+                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(tau / tau_initial))
                           );
     }
 }

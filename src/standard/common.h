@@ -81,8 +81,8 @@ inline void coordinate3(int *i, int *j, int *k, int offset, int N) {
 }
 
 // physics.cpp
-extern float t_evol;                // Dimensionless program time variable (in conformal time).
-extern float t_initial;             // Initial conformal time.
+extern float tau;                   // Dimensionless program time variable (in conformal time).
+extern float tau_initial;           // Initial conformal time.
 extern float T_initial;             // Initial temperature in units of f_a. Defined when H ~ f_a
 extern float t_phys_initial;        // Initial physical time.
 extern float R_initial;             // Initial scale factor.
@@ -135,3 +135,5 @@ sparse_status_t mkl_wrapper_sparse_mv (const sparse_operation_t operation,
                                        const dtype *x,
                                        const dtype beta,
                                        dtype *y);
+void mkl_axpy (const MKL_INT n, const dtype a, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
+void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
