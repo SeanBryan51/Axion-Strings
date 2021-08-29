@@ -47,9 +47,6 @@ add_library(
     utils/utils.h
     utils/fileutil.cpp
     utils/read_parameters.cpp
-    utils/mmio.h
-    utils/mmio.cpp
-    utils/read_mtx.cpp
 )
 
 target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
