@@ -42,12 +42,9 @@ static void shift3D(fftw_complex *arr, int N) {
  */
 void initialise_everything(all_data *data) {
 
-    int N = parameters.N;
     int length = get_length();
 
-    // TOOD: remove set coefficient matrix functionality (stupid)
-    if (parameters.use_coeff_matrix) set_coefficient_matrix(parameters.coeff_matrix_path, &coefficient_matrix);
-    else build_coefficient_matrix(&coefficient_matrix, parameters.NDIMS, parameters.N);
+    build_coefficient_matrix(&data->coefficient_matrix, parameters.NDIMS, parameters.N);
 
     // Initialise physical parameters:
     set_internal_variables();

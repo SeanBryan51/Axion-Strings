@@ -1,24 +1,7 @@
 #include "common.h"
-#include "utils/utils.h"
+// #include "utils/utils.h"
 
 #include <assert.h>
-
-sparse_matrix_t coefficient_matrix;
-
-void set_coefficient_matrix(char *file_path, sparse_matrix_t *handle) {
-
-    int length, nnz;
-    // NOTE: the following arrays are deallocated when we call mkl_sparse_destroy()
-    int *rows;
-    int *cols;
-    dtype *values;
-
-    read_mtx_file(file_path, &length, &nnz, rows, cols, values);
-
-    // create sparse matrix object in COO format:
-    sparse_status_t status = mkl_wrapper_sparse_create_coo (handle, SPARSE_INDEX_BASE_ZERO, length, length, nnz, rows, cols, values);
-    assert(status == SPARSE_STATUS_SUCCESS);
-}
 
 void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 

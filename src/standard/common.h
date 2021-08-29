@@ -18,7 +18,6 @@ typedef float dtype;
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
 
 // Mega struct containing all the pointers to large arrays/solution vectors:
-// TODO: add coefficient matrix
 typedef struct _all_data {
     dtype *phi1; // phi_1 field values
     dtype *phi2; // phi_2 field values
@@ -30,8 +29,12 @@ typedef struct _all_data {
     dtype *ker2_next; // next kernel for phi_2 equation of motion
     // dtype *dvdphi1; // potential term in phi_1 equation of motion
     // dtype *dvdphi2; // potential term in phi_2 equation of motion
+
     dtype *axion; // axion field values
     dtype *saxion; // saxion field values
+
+    sparse_matrix_t coefficient_matrix;
+
 } all_data;
 
 /*
@@ -107,8 +110,6 @@ void init_noise(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 
 // spatial.cpp
-extern sparse_matrix_t coefficient_matrix;
-void  set_coefficient_matrix(char *file_path, sparse_matrix_t *handle);
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
 dtype laplacian2D(dtype *phi, int i, int j, float dx, int N);
 dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
