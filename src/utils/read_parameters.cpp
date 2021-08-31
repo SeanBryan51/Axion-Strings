@@ -55,16 +55,6 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "use_coeff_matrix");
-    p_list[n_params].addr = &parameters.use_coeff_matrix;
-    p_list[n_params].type = INT;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "coeff_matrix_path");
-    p_list[n_params].addr = &parameters.coeff_matrix_path;
-    p_list[n_params].type = STRING;
-    n_params++;
-
     strcpy(p_list[n_params].tag, "fa_phys");
     p_list[n_params].addr = &parameters.fa_phys;
     p_list[n_params].type = FLOAT;

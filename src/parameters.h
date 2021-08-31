@@ -12,9 +12,6 @@ extern struct _parameters {
     float space_step;
     float time_step;
 
-    int   use_coeff_matrix;
-    char  coeff_matrix_path[MAX_LEN];
-
     float fa_phys;
     float lambdaPRS;
     char  potential[MAX_LEN];
