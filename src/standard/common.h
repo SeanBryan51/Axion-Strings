@@ -4,9 +4,12 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <gsl/gsl_math.h>
+#include <vector>
 
 #include "mkl_spblas.h"
 #include "../parameters.h"
+
+using namespace std;
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double dtype;
@@ -36,6 +39,9 @@ typedef struct _all_data {
     sparse_matrix_t coefficient_matrix;
 
 } all_data;
+
+typedef struct vec2i { int x; int y; } vec2i;
+typedef struct vec3i { int x; int y; int z; } vec3i;
 
 /*
  * Returns length of solution vector:
@@ -116,8 +122,8 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
 void  gradient(dtype *dphi, dtype *phi);
 
 // stringID.cpp
-int Cores2D(dtype *field, int thr);
-int Cores3D(dtype *field, int thr);
+int Cores2D(dtype *axion, vector <vec2i> s);
+int Cores3D(dtype *axion, vector <vec3i> s);
 
 // mkl_wrapper.cpp
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,
@@ -137,3 +143,7 @@ sparse_status_t mkl_wrapper_sparse_mv (const sparse_operation_t operation,
                                        dtype *y);
 void mkl_axpy (const MKL_INT n, const dtype a, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
 void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
+
+// fileio.cpp
+void read_ic_file(dtype * phi1, dtype * phidot1, dtype * phi2, dtype * phidot2, const char * filepath);
+void save_data(char *file_name, dtype *data, int length);

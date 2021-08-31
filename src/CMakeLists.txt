@@ -34,6 +34,7 @@ add_library(
     standard/stringID.cpp
     standard/physics.cpp
     standard/mkl_wrapper.cpp
+    standard/fileio.cpp
 )
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -45,7 +46,6 @@ target_link_libraries(main standard)
 add_library(
     utils
     utils/utils.h
-    utils/fileutil.cpp
     utils/read_parameters.cpp
 )
 

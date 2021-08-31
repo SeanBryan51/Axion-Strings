@@ -1,10 +1,4 @@
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#include "utils.h"
-#include "parameters.h"
+#include "common.h"
 
 /* 
  * Read initial field values from the initial conditions file. Field values/arrays are stored on the heap.
