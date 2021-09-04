@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <gsl/gsl_math.h>
+// #include <gsl/gsl_math.h>
 
 #include "utils/utils.h"
 
@@ -104,7 +104,7 @@ void run_standard() {
 
 static void debug(all_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
-        if (gsl_isnan(data.phi1[i]) || gsl_isnan(data.phi2[i])) {
+        if (isnan(data.phi1[i]) || isnan(data.phi2[i])) {
             fprintf(fp_main_output, "Error: NaN encountered in solution vector.\n");
             fprintf(fp_main_output, " tstep = %d\n", tstep);
             assert(0);

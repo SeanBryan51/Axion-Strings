@@ -2,9 +2,9 @@
  * Description: Module that sets the initial conditions for the string simulation
  */
 
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_math.h>
+// #include <gsl/gsl_rng.h>
+// #include <gsl/gsl_randist.h>
+// #include <gsl/gsl_math.h>
 #include <fftw3.h>
 
 #include "common.h"
@@ -104,49 +104,29 @@ void free_all_data(all_data data) {
     free(data.ker2_next);
 }
 
-/*
- * Random white noise in position space, independent of the shape
- * of the potential.
- */
-void init_noise(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
-
-    int N = parameters.N;
-    gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
-    gsl_rng_set(rng, parameters.seed);
-
-    dtype th, r;
-    if (parameters.NDIMS == 2) {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                th = 2 * M_PI * gsl_rng_uniform(rng);
-                r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
-                // Note: offset(x,y) = (x + ny * y)
-                phi1[offset2(i,j,N)] = r * cosf(th);
-                phi2[offset2(i,j,N)] = r * sinf(th);
-                phidot1[offset2(i,j,N)] = phidot2[offset2(i,j,N)] = 0;
-            }
-        }
-    } else if (parameters.NDIMS == 3) {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                for (int k = 0; k < N; k++) {
-                    th = 2 * M_PI * gsl_rng_uniform(rng);
-                    r = gsl_ran_gaussian(rng, 0.1f) + 1.0f;
-                    // Note: offset(x,y,z) = (x * ny + y) * nz + z
-                    phi1[offset3(i,j,k,N)] = r * cosf(th);
-                    phi2[offset3(i,j,k,N)] = r * sinf(th);
-                    phidot1[offset3(i,j,k,N)] = phidot2[offset3(i,j,k,N)] = 0;
-                }
-            }
-        }
-    }
-}
-
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2) {
 
-    int length, N = parameters.N;
-    gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
-    gsl_rng_set(rng, parameters.seed);
+    int length = get_length(), N = parameters.N;
+
+    // Set up rng stream:
+    VSLStreamStatePtr stream;
+    vslNewStream(&stream, VSL_BRNG_SFMT19937, parameters.seed);
+
+    dtype *rng_array_1 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *rng_array_2 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *rng_array_3 = (dtype *) calloc(length, sizeof(dtype));
+    dtype *rng_array_4 = (dtype *) calloc(length, sizeof(dtype));
+
+    assert(rng_array_1 != NULL && rng_array_2 != NULL && rng_array_3 != NULL && rng_array_4 != NULL);
+
+    // Fill arrays with random numbers:
+    mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_1, 0.0f, 1.0f);
+    mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_2, 0.0f, 1.0f);
+    mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_3, 0.0f, 1.0f);
+    mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_4, 0.0f, 1.0f);
+
+    // gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
+    // gsl_rng_set(rng, parameters.seed);
 
     if (parameters.NDIMS == 2) {
         length = N * N;
@@ -176,7 +156,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             for (int j = 0; j < N; j++) {
 
                 dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-                dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
+                dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
                 dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
                 // TODO: okay to remove L normalisation inside sqrt?
                 dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
@@ -203,10 +183,14 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
             dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
-            phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-            phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            // phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            // phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            // phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            // phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            phi_k[m][0] = amplitude * rng_array_1[m];
+            phi_k[m][1] = amplitude * rng_array_2[m];
+            phidot_k[m][0] = amplitude_dot * rng_array_3[m];
+            phidot_k[m][1] = amplitude_dot * rng_array_4[m];
         }
 
         fftw_execute(p1);
@@ -262,7 +246,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
                 for (int l = 0; l < N; l++) {
 
                     dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-                    dtype omegak = sqrt(gsl_pow_2(k * M_PI / N) + m_eff_squared);
+                    dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
                     dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
                     // TODO: okay to remove L normalisation inside sqrt?
                     dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
@@ -288,10 +272,14 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
             dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
-            phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-            phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            // phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            // phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            // phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            // phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            phi_k[m][0] = amplitude * rng_array_1[m];
+            phi_k[m][1] = amplitude * rng_array_2[m];
+            phidot_k[m][0] = amplitude_dot * rng_array_3[m];
+            phidot_k[m][1] = amplitude_dot * rng_array_4[m];
         }
 
         fftw_execute(p1);
@@ -334,10 +322,10 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     dtype phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
     phi1_sd = phi2_sd = phidot1_sd = phidot2_sd = 0.0f;
     for (int i = 0; i < length; i++) {
-        phi1_sd += gsl_pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
-        phi2_sd += gsl_pow_2(phi2[i] - phi2_mean) / (length - 1.0f);
-        phidot1_sd += gsl_pow_2(phidot1[i] - phidot1_mean) / (length - 1.0f);
-        phidot2_sd += gsl_pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
+        phi1_sd += pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
+        phi2_sd += pow_2(phi2[i] - phi2_mean) / (length - 1.0f);
+        phidot1_sd += pow_2(phidot1[i] - phidot1_mean) / (length - 1.0f);
+        phidot2_sd += pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
     }
 
     // TODO: uncommenting the following causes the simulation to diverge! WHY
