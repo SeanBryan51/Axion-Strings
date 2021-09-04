@@ -21,8 +21,6 @@ typedef double dtype;
 typedef float dtype;
 #endif
 
-#define pow_2(v) ((v)*(v))
-
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
 
