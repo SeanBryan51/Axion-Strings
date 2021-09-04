@@ -25,7 +25,6 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         assert(rows != NULL && cols != NULL && values != NULL);
 
         // "fill in" coefficient matrix in COO format:
-        #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
 
             int x, y;
@@ -75,7 +74,6 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         assert(rows != NULL && cols != NULL && values != NULL);
 
         // "fill in" coefficient matrix in COO format:
-        #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
 
             int x, y, z;
