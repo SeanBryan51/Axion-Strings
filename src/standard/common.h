@@ -5,7 +5,8 @@
 #include <assert.h>
 #include <gsl/gsl_math.h>
 #include <vector>
-#include <fstream>
+
+#include <omp.h>
 
 #include "mkl_spblas.h"
 #include "../parameters.h"
@@ -41,6 +42,8 @@ typedef struct _all_data {
 
 typedef struct vec2i { int x; int y; } vec2i;
 typedef struct vec3i { int x; int y; int z; } vec3i;
+
+inline double pow_2(double x) { return x*x; }
 
 /*
  * Returns length of solution vector:

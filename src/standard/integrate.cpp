@@ -142,7 +142,7 @@ dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
     laplacian = (
         (phi[offset2(i+1,j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i-1,j,N)])
       + (phi[offset2(i,j+1,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,j-1,N)])
-      ) / (gsl_pow_2(dx));
+      ) / (pow_2(dx));
 
     return laplacian;
 }
@@ -155,7 +155,7 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
         (phi[offset3(i+1,j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)])
       + (phi[offset3(i,j+1,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j-1,k,N)])
       + (phi[offset3(i,j,k+1,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j,k-1,N)])
-      )/gsl_pow_2(dx);
+      )/pow_2(dx);
 
     return laplacian;
 }
@@ -223,13 +223,13 @@ void kernels(dtype *ker1, dtype *ker2, all_data data) {
     for (int i = 0; i < length; i++) {
         ker1[i] = ker1[i] - 2.0f / tau * data.phidot1[i]
                           - parameters.lambdaPRS * data.phi1[i] * (
-                              gsl_pow_2(data.phi1[i]) + gsl_pow_2(data.phi2[i]) - 1
-                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(tau / tau_initial))
+                              pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
+                            + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
                           );
         ker2[i] = ker2[i] - 2.0f / tau * data.phidot2[i]
                           - parameters.lambdaPRS * data.phi2[i] * (
-                              gsl_pow_2(data.phi1[i]) + gsl_pow_2(data.phi2[i]) - 1
-                            + gsl_pow_2(T_initial) / (3.0f * gsl_pow_2(tau / tau_initial))
+                              pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
+                            + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
                           );
     }
 }

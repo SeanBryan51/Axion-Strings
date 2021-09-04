@@ -13,11 +13,13 @@
  * See question 3.11. from http://www.fftw.org/faq/
  */
 static void shift2D(fftw_complex *arr, int N) {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            arr[offset2(i,j,N)][0] *= pow(-1.0f, i + j);
-            arr[offset2(i,j,N)][1] *= pow(-1.0f, i + j);
-        }
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j;
+        coordinate2(&i, &j, m, N);
+        arr[m][0] *= pow(-1.0f, i + j);
+        arr[m][1] *= pow(-1.0f, i + j);
     }
 }
 
@@ -25,13 +27,13 @@ static void shift2D(fftw_complex *arr, int N) {
  * See question 3.11. from http://www.fftw.org/faq/
  */
 static void shift3D(fftw_complex *arr, int N) {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < N; k++) {
-                arr[offset3(i,j,k,N)][0] *= pow(-1.0f, i + j + k);
-                arr[offset3(i,j,k,N)][1] *= pow(-1.0f, i + j + k);
-            }
-        }
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j, k;
+        coordinate3(&i, &j, &k, m, N);
+        arr[m][0] *= pow(-1.0f, i + j + k);
+        arr[m][1] *= pow(-1.0f, i + j + k);
     }
 }
 
@@ -169,6 +171,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
         p2 = fftw_plan_dft_2d(N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
 
+#if 0
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
 
@@ -185,6 +188,25 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
                 phidot_k[offset2(i,j,N)][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
 
             }
+        }
+#endif
+        // Can't parallelise with gsl
+        // #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            int i, j;
+            coordinate2(&i, &j, m, N);
+
+            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
+            dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
+            dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+            // TODO: okay to remove L normalisation inside sqrt?
+            dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
+            dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
+
+            phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
         }
 
         fftw_execute(p1);
@@ -234,6 +256,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
         p2 = fftw_plan_dft_3d(N, N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
 
+#if 0
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 for (int l = 0; l < N; l++) {
@@ -252,6 +275,23 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
 
                 }
             }
+        }
+#endif
+        // #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            int i, j, l;
+            coordinate3(&i, &j, &l, m, N);
+            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
+            dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
+            dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+            // TODO: okay to remove L normalisation inside sqrt?
+            dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
+            dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
+
+            phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
+            phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
+            phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
         }
 
         fftw_execute(p1);

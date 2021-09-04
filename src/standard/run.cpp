@@ -48,14 +48,14 @@ void run_standard() {
             if (parameters.NDIMS == 2) {
                 std::vector <vec2i> s;
                 int num_cores = Cores2D(data.axion, &s);
-                float xi = num_cores * gsl_pow_2(time / tau);
+                float xi = num_cores * pow_2(time / tau);
                 fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
 
             if (parameters.NDIMS == 3) {
                 std::vector <vec3i> s;
                 int num_cores = Cores3D(data.axion, &s);
-                float xi = num_cores * gsl_pow_2(time / tau);
+                float xi = num_cores * pow_2(time / tau);
                 fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
         }
