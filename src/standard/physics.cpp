@@ -14,7 +14,7 @@ float light_crossing_time;
 /*
  * Initialise all physical parameters / constants.
  */
-void set_internal_variables() {
+void set_physics_variables() {
     // TODO: okay there are a tonne of magic variables here which have NO INFLUENCE ON THE DYNAMICS
 
     // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
@@ -56,7 +56,7 @@ void set_internal_variables() {
 }
 
 /*
- * Physical time in program units.
+ * Dimnensionless physical time (in program units).
  */
 float physical_time(float t_conformal) {
     // float time = parameters.t0 * powf(R/parameters.R0*parameters.ms, 2.0f); // Cosmic time in L units 

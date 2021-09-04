@@ -29,8 +29,7 @@ add_library(
     standard/interface.h
     standard/run.cpp
     standard/init.cpp
-    standard/spatial.cpp
-    standard/evolve.cpp
+    standard/integrate.cpp
     standard/stringID.cpp
     standard/physics.cpp
     standard/mkl_wrapper.cpp

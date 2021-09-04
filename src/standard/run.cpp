@@ -7,15 +7,24 @@
 #include "common.h"
 #include "interface.h"
 
-int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
-int should_count_strings(int tstep, int string_checks, int final_tstep);
-void debug(all_data data, int length, int tstep);
+static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
+static int should_count_strings(int tstep, int string_checks, int final_tstep);
+static void debug(all_data data, int length, int tstep);
+
 void run_standard() {
 
     all_data data;
     int length = get_length();
 
-    initialise_everything(&data);
+    open_output_filestreams();
+
+    build_coefficient_matrix(&data.coefficient_matrix, parameters.NDIMS, parameters.N);
+
+    set_physics_variables();
+
+    initialise_data(&data);
+
+    if (parameters.run_string_finding) fprintf(fp_string_finding, "time,ncores\n");
 
     int n_snapshots_written = 0;
     int light_time = round(0.5f * parameters.N * parameters.space_step / parameters.time_step);
@@ -37,32 +46,50 @@ void run_standard() {
             for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
 
             if (parameters.NDIMS == 2) {
-                int num_cores = Cores2D(data.axion, parameters.thr);
+                std::vector <vec2i> s;
+                int num_cores = Cores2D(data.axion, &s);
                 float xi = num_cores * gsl_pow_2(time / tau);
-                // printf("%f %f\n",time,xi);
-                printf("%f %f\n",Hinv,xi);
+                fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
+
             if (parameters.NDIMS == 3) {
-                int num_cores = Cores3D(data.axion, parameters.thr);
+                std::vector <vec3i> s;
+                int num_cores = Cores3D(data.axion, &s);
                 float xi = num_cores * gsl_pow_2(time / tau);
-                printf("%f %f\n",time,xi);
+                fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
         }
 
         if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
-            printf("Writing snapshot %d:\n", n_snapshots_written);
+            fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
 
             // output time variables:
-            printf("  string tension = %f\n", kappa);
-            printf("  time           = %f\n", time);
+            fprintf(fp_main_output, "  string tension = %f\n", kappa);
+            fprintf(fp_main_output, "  time           = %f\n", time);
 
             // file names:
-            char fname_phi1[50], fname_phi2[50];
+            char fname_phi1[50], fname_phi2[50], fname_strings[50];
             sprintf(fname_phi1, "phi1-snapshot%d", n_snapshots_written);
             sprintf(fname_phi2, "phi2-snapshot%d", n_snapshots_written);
+            sprintf(fname_strings, "string-pos-snapshot%d", n_snapshots_written);
 
             save_data(fname_phi1, data.phi1, length);
             save_data(fname_phi2, data.phi2, length);
+
+            // compute axion field: 
+            for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
+
+            // save string positions:
+            if (parameters.NDIMS == 2) {
+                std::vector <vec2i> s;
+                Cores2D(data.axion, &s);
+                save_strings2(fname_strings, &s);
+            }
+            if (parameters.NDIMS == 3) {
+                std::vector <vec3i> s;
+                Cores3D(data.axion, &s);
+                save_strings3(fname_strings, &s);
+            }
 
             n_snapshots_written++;
         }
@@ -70,26 +97,28 @@ void run_standard() {
 
     // Free memory:
     free_all_data(data);
+
+    close_output_filestreams();
 }
 
 
-void debug(all_data data, int length, int tstep) {
+static void debug(all_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
         if (gsl_isnan(data.phi1[i]) || gsl_isnan(data.phi2[i])) {
-            printf("Error: NaN encountered in solution vector.\n");
-            printf(" tstep = %d\n", tstep);
+            fprintf(fp_main_output, "Error: NaN encountered in solution vector.\n");
+            fprintf(fp_main_output, " tstep = %d\n", tstep);
             assert(0);
         }
     }
 }
 
-int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
+static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
     if (!parameters.save_snapshots) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
 }
 
-int should_count_strings(int tstep, int string_checks, int final_tstep) {
+static int should_count_strings(int tstep, int string_checks, int final_tstep) {
     if (!parameters.run_string_finding) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (string_checks - 1)) == 0;

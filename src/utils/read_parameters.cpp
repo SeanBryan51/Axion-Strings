@@ -90,6 +90,11 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = INT;
     n_params++;
 
+    strcpy(p_list[n_params].tag, "string_finding_output_file_path");
+    p_list[n_params].addr = &parameters.string_finding_output_file_path;
+    p_list[n_params].type = STRING;
+    n_params++;
+
     strcpy(p_list[n_params].tag, "save_snapshots");
     p_list[n_params].addr = &parameters.save_snapshots;
     p_list[n_params].type = INT;
@@ -102,6 +107,16 @@ static int parameters_to_read(Parameter *p_list) {
 
     strcpy(p_list[n_params].tag, "output_directory");
     p_list[n_params].addr = &parameters.output_directory;
+    p_list[n_params].type = STRING;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "write_output_file");
+    p_list[n_params].addr = &parameters.write_output_file;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "output_file_path");
+    p_list[n_params].addr = &parameters.output_file_path;
     p_list[n_params].type = STRING;
     n_params++;
 
@@ -177,23 +192,4 @@ void read_parameter_file(char *fname) {
         }
     }
 
-    // print parameter values:
-    printf("Input parameters:\n");
-    parameters_to_read(p_list);
-    for(int i = 0; i < n_params; i++) {
-        switch (p_list[i].type) {
-            case DOUBLE:
-                printf("  %s %f\n", p_list[i].tag, *((double *) p_list[i].addr));
-                break;
-            case STRING:
-                printf("  %s %s\n", p_list[i].tag, (char *) p_list[i].addr);
-                break;
-            case FLOAT:
-                printf("  %s %f\n", p_list[i].tag, *((float *) p_list[i].addr));
-                break;
-            case INT:
-                printf("  %s %d\n", p_list[i].tag, *((int *) p_list[i].addr));
-                break;
-        }
-    }
 }

@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     read_parameter_file(argv[1]);
 
     // TODO: parameter sanity checks
+    printf("Running with %s\n", argv[1]);
 
     clock_t start, end;
     double cpu_time_used;

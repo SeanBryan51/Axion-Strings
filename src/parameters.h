@@ -21,11 +21,15 @@ extern struct _parameters {
     int   n_snapshots;
     char  output_directory[MAX_LEN];
 
+    int   write_output_file;
+    char  output_file_path[MAX_LEN];
+
     unsigned int seed;
 
     // String finding:
     int run_string_finding;
     int string_checks;
     int thr;
+    char string_finding_output_file_path[MAX_LEN];
 
 } parameters;

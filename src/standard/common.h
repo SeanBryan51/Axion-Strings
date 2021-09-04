@@ -5,11 +5,10 @@
 #include <assert.h>
 #include <gsl/gsl_math.h>
 #include <vector>
+#include <fstream>
 
 #include "mkl_spblas.h"
 #include "../parameters.h"
-
-using namespace std;
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double dtype;
@@ -97,7 +96,7 @@ extern float m_saxion;              // Saxion mass in units of f_a: m_saxion = s
 extern float g_star;                // Relativistic degrees of freedom: 
 extern float m_eff_squared;         // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
 extern float light_crossing_time;   // Light crossing time: approximate time for light to travel one Hubble volume.
-void  set_internal_variables();
+void  set_physics_variables();
 float physical_time(float t_conformal);
 float scale_factor(float t_conformal);
 float hubble_parameter(float t_conformal);
@@ -105,25 +104,23 @@ float temperature(float t_conformal);
 float string_tension(float t_confomal);
 float meff_squared(float t_conformal);
 
-// evolution.cpp
-void velocity_verlet_scheme(all_data data);
-void kernels(dtype *ker1, dtype *ker2, all_data data);
-
 // init.cpp
-void initialise_everything(all_data *data);
+void initialise_data(all_data *data);
 void free_all_data(all_data data);
 void init_noise(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
 
-// spatial.cpp
+// integrate.cpp
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
 dtype laplacian2D(dtype *phi, int i, int j, float dx, int N);
 dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
 void  gradient(dtype *dphi, dtype *phi);
+void  velocity_verlet_scheme(all_data data);
+void  kernels(dtype *ker1, dtype *ker2, all_data data);
 
 // stringID.cpp
-int Cores2D(dtype *axion, vector <vec2i> s);
-int Cores3D(dtype *axion, vector <vec3i> s);
+int Cores2D(dtype *axion, std::vector <vec2i> *s);
+int Cores3D(dtype *axion, std::vector <vec3i> *s);
 
 // mkl_wrapper.cpp
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,
@@ -145,5 +142,10 @@ void mkl_axpy (const MKL_INT n, const dtype a, const dtype *x, const MKL_INT inc
 void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
 
 // fileio.cpp
-void read_ic_file(dtype * phi1, dtype * phidot1, dtype * phi2, dtype * phidot2, const char * filepath);
+extern FILE *fp_main_output, *fp_string_finding;
+void read_field_data(const char *filepath, dtype *data, int length);
 void save_data(char *file_name, dtype *data, int length);
+void save_strings2(char *file_name, std::vector <vec2i> *v);
+void save_strings3(char *file_name, std::vector <vec3i> *v);
+void open_output_filestreams();
+void close_output_filestreams();

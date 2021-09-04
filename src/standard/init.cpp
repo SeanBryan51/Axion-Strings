@@ -40,14 +40,9 @@ static void shift3D(fftw_complex *arr, int N) {
  * 1. Allocates memory for solution vectors in all_data struct.
  * 2. Initialises physical parameters defined in physics.cpp.
  */
-void initialise_everything(all_data *data) {
+void initialise_data(all_data *data) {
 
     int length = get_length();
-
-    build_coefficient_matrix(&data->coefficient_matrix, parameters.NDIMS, parameters.N);
-
-    // Initialise physical parameters:
-    set_internal_variables();
 
     // Allocate fields on the heap:
 
