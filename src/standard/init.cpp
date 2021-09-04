@@ -69,7 +69,7 @@ void initialise_data(all_data *data) {
     assert(ker1_curr != NULL && ker2_curr != NULL && ker1_next != NULL && ker2_next != NULL);
 
     dtype *axion = NULL;
-    if (parameters.run_string_finding) axion = (dtype *) calloc(length, sizeof(dtype));
+    if (parameters.run_string_finding || parameters.save_snapshots) axion = (dtype *) calloc(length, sizeof(dtype));
 
     dtype *saxion = NULL;
 
