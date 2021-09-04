@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-// #include <gsl/gsl_math.h>
 
 #include "utils.h"
 #include "../parameters.h"

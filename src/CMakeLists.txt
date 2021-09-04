@@ -14,9 +14,8 @@ set(BLA_VENDOR Intel10_64lp)
 find_package(BLAS REQUIRED)
 target_link_libraries(main ${BLAS_LIBRARIES})
 
-
-find_package(GSL REQUIRED)
-target_link_libraries(main GSL::gsl)
+# find_package(GSL REQUIRED)
+# target_link_libraries(main GSL::gsl)
 
 find_package(OpenMP REQUIRED) 
 target_link_libraries(main OpenMP::OpenMP_CXX)
@@ -37,7 +36,7 @@ add_library(
 )
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(standard GSL::gsl)
+# target_link_libraries(standard GSL::gsl)
 target_link_libraries(standard OpenMP::OpenMP_CXX)
 target_link_libraries(standard ${BLAS_LIBRARIES})
 target_link_libraries(main standard)
@@ -49,7 +48,7 @@ add_library(
 )
 
 target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(utils GSL::gsl)
+# target_link_libraries(utils GSL::gsl)
 target_link_libraries(utils ${BLAS_LIBRARIES})
 target_link_libraries(main utils)
 

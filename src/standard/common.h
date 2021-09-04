@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-// #include <gsl/gsl_math.h>
 #include <math.h>
 #include <vector>
 
 #include <omp.h>
 
+#include "mkl.h"
 #include "mkl_vsl.h"
 #include "mkl_spblas.h"
 #include "../parameters.h"

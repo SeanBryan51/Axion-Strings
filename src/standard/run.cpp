@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <assert.h>
-// #include <gsl/gsl_math.h>
 
 #include "utils/utils.h"
 
@@ -22,7 +21,32 @@ void run_standard() {
 
     set_physics_variables();
 
-    initialise_data(&data);
+    // Allocate fields on the heap:
+    data.phi1    = (dtype *) calloc(length, sizeof(dtype));
+    data.phi2    = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot1 = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot2 = (dtype *) calloc(length, sizeof(dtype));
+    data.ker1_curr = (dtype *) calloc(length, sizeof(dtype));
+    data.ker2_curr = (dtype *) calloc(length, sizeof(dtype));
+    data.ker1_next = (dtype *) calloc(length, sizeof(dtype));
+    data.ker2_next = (dtype *) calloc(length, sizeof(dtype));
+    data.axion = NULL;
+    data.saxion = NULL;
+
+    // Assert allocation was successful:
+    assert(data.phi1 != NULL && data.phi2 != NULL && data.phidot1 != NULL && data.phidot2 != NULL);
+    assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
+
+    if (parameters.run_string_finding || parameters.save_snapshots) {
+        data.axion = (dtype *) calloc(length, sizeof(dtype));
+        assert(data.axion != NULL);
+    }
+
+    // Initialise fields:
+    gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
+
+    // Initialise kernels for the next time step:
+    kernels(data.ker1_next, data.ker2_next, data);
 
     if (parameters.run_string_finding) fprintf(fp_string_finding, "time,ncores\n");
 
@@ -96,7 +120,14 @@ void run_standard() {
     }
 
     // Free memory:
-    free_all_data(data);
+    free(data.phi1);
+    free(data.phi2);
+    free(data.phidot1);
+    free(data.phidot2);
+    free(data.ker1_curr);
+    free(data.ker2_curr);
+    free(data.ker1_next);
+    free(data.ker2_next);
 
     close_output_filestreams();
 }

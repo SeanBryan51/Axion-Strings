@@ -2,9 +2,6 @@
  * Description: Module that sets the initial conditions for the string simulation
  */
 
-// #include <gsl/gsl_rng.h>
-// #include <gsl/gsl_randist.h>
-// #include <gsl/gsl_math.h>
 #include <fftw3.h>
 
 #include "common.h"
@@ -37,73 +34,6 @@ static void shift3D(fftw_complex *arr, int N) {
     }
 }
 
-/* 
- * Does the following:
- * 1. Allocates memory for solution vectors in all_data struct.
- * 2. Initialises physical parameters defined in physics.cpp.
- */
-void initialise_data(all_data *data) {
-
-    int length = get_length();
-
-    // Allocate fields on the heap:
-
-    dtype *phi1 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *phi2 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *phidot1 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *phidot2 = (dtype *) calloc(length, sizeof(dtype));
-
-    // Assert allocation was successful:
-    assert(phi1 != NULL && phi2 != NULL && phidot1 != NULL && phidot2 != NULL);
-
-    // Initialise fields:
-    // TODO: remove init_noise()
-    // init_noise(phi1, phi2, phidot1, phidot2);
-    gaussian_thermal(phi1, phi2, phidot1, phidot2);
-
-    // Allocate field kernels on the heap:
-    dtype *ker1_curr = (dtype *) calloc(length, sizeof(dtype));
-    dtype *ker2_curr = (dtype *) calloc(length, sizeof(dtype));
-    dtype *ker1_next = (dtype *) calloc(length, sizeof(dtype));
-    dtype *ker2_next = (dtype *) calloc(length, sizeof(dtype));
-
-    // Assert allocation was successful:
-    assert(ker1_curr != NULL && ker2_curr != NULL && ker1_next != NULL && ker2_next != NULL);
-
-    dtype *axion = NULL;
-    if (parameters.run_string_finding || parameters.save_snapshots) axion = (dtype *) calloc(length, sizeof(dtype));
-
-    dtype *saxion = NULL;
-
-    data->phi1 = phi1;
-    data->phi2 = phi2;
-    data->phidot1 = phidot1;
-    data->phidot2 = phidot2;
-    data->ker1_curr = ker1_curr;
-    data->ker2_curr = ker2_curr;
-    data->ker1_next = ker1_next;
-    data->ker2_next = ker2_next;
-    data->axion = axion;
-    data->saxion = saxion;
-
-    // Initialise kernels for the next time step:
-    kernels(data->ker1_next, data->ker2_next, *data);
-}
-
-/*
- * Free memory allocated in all_data struct.
- */
-void free_all_data(all_data data) {
-    free(data.phi1);
-    free(data.phi2);
-    free(data.phidot1);
-    free(data.phidot2);
-    free(data.ker1_curr);
-    free(data.ker2_curr);
-    free(data.ker1_next);
-    free(data.ker2_next);
-}
-
 void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2) {
 
     int length = get_length(), N = parameters.N;
@@ -124,9 +54,6 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_2, 0.0f, 1.0f);
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_3, 0.0f, 1.0f);
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_4, 0.0f, 1.0f);
-
-    // gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxs0);
-    // gsl_rng_set(rng, parameters.seed);
 
     if (parameters.NDIMS == 2) {
         length = N * N;
@@ -151,27 +78,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
         p2 = fftw_plan_dft_2d(N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-#if 0
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-
-                dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-                dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
-                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-                // TODO: okay to remove L normalisation inside sqrt?
-                dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
-                dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
-
-                phi_k[offset2(i,j,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-                phi_k[offset2(i,j,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-                phidot_k[offset2(i,j,N)][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-                phidot_k[offset2(i,j,N)][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-
-            }
-        }
-#endif
-        // Can't parallelise with gsl
-        // #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static)
         for (int m = 0; m < length; m++) {
             int i, j;
             coordinate2(&i, &j, m, N);
@@ -183,10 +90,6 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
             dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
-            // phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            // phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            // phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-            // phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
             phidot_k[m][0] = amplitude_dot * rng_array_3[m];
@@ -240,28 +143,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         phidot = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
         p2 = fftw_plan_dft_3d(N, N, N, phidot_k, phidot, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-#if 0
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                for (int l = 0; l < N; l++) {
-
-                    dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-                    dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
-                    dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-                    // TODO: okay to remove L normalisation inside sqrt?
-                    dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
-                    dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
-
-                    phi_k[offset3(i,j,l,N)][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-                    phi_k[offset3(i,j,l,N)][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-                    phidot_k[offset3(i,j,l,N)][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-                    phidot_k[offset3(i,j,l,N)][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-
-                }
-            }
-        }
-#endif
-        // #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static)
         for (int m = 0; m < length; m++) {
             int i, j, l;
             coordinate3(&i, &j, &l, m, N);
@@ -272,10 +154,6 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
             dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
             dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
 
-            // phi_k[m][0] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            // phi_k[m][1] = amplitude * gsl_ran_gaussian(rng, 1.0f);
-            // phidot_k[m][0] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
-            // phidot_k[m][1] = amplitude_dot * gsl_ran_gaussian(rng, 1.0f);
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
             phidot_k[m][0] = amplitude_dot * rng_array_3[m];

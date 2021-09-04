@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-// #include <gsl/gsl_math.h>
 #include <assert.h>
 
 #include "standard/common.h"
