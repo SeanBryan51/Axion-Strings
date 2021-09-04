@@ -1,7 +1,5 @@
 #include "common.h"
 
-#include "mkl.h"
-
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A, const sparse_index_base_t indexing, const MKL_INT rows, const MKL_INT cols, const MKL_INT nnz, MKL_INT *row_indx, MKL_INT * col_indx, dtype *values) {
 #ifdef USE_DOUBLE_PRECISION
     return mkl_sparse_d_create_coo (A, indexing, rows, cols, nnz, row_indx, col_indx, values);
@@ -34,12 +32,10 @@ void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, co
 #endif
 }
 
-#if 0
-void mkl_v_add(int n, const dtype *a, const dtype *b, dtype *r) {
+int mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dtype *r, dtype a, dtype sigma) {
 #ifdef USE_DOUBLE_PRECISION
-    vdAdd(n, a, b, r);
+    return vdRngGaussian(method, stream, n, r, a, sigma);
 #else
-    vsAdd(n, a, b, r);
+    return vsRngGaussian(method, stream, n, r, a, sigma);
 #endif
 }
-#endif

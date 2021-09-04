@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <omp.h>
 
 #include "standard/interface.h"
 #include "utils/utils.h"
@@ -15,20 +15,15 @@ int main(int argc, char *argv[]) {
     // Initialise global variables defined in parameters.h:
     read_parameter_file(argv[1]);
 
-    // TODO: parameter sanity checks
     printf("Running with %s\n", argv[1]);
 
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
+    double start = omp_get_wtime();
 
     run_standard();
 
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    double end = omp_get_wtime();
 
-    printf("Time taken: %f seconds\n", cpu_time_used);
+    printf("Time taken: %f seconds\n", end - start);
 
     return EXIT_SUCCESS;
 }

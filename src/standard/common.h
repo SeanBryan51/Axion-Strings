@@ -2,12 +2,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
-#include <gsl/gsl_math.h>
+#include <math.h>
 #include <vector>
-#include <fstream>
 
+#include <omp.h>
+
+#include "mkl.h"
+#include "mkl_vsl.h"
 #include "mkl_spblas.h"
+
 #include "../parameters.h"
 
 #ifdef USE_DOUBLE_PRECISION
@@ -15,6 +20,8 @@ typedef double dtype;
 #else
 typedef float dtype;
 #endif
+
+#define pow_2(v) ((v)*(v))
 
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
@@ -140,6 +147,7 @@ sparse_status_t mkl_wrapper_sparse_mv (const sparse_operation_t operation,
                                        dtype *y);
 void mkl_axpy (const MKL_INT n, const dtype a, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
 void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, const MKL_INT incy);
+int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dtype *r, dtype a, dtype sigma);
 
 // fileio.cpp
 extern FILE *fp_main_output, *fp_string_finding;

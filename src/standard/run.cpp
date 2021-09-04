@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <gsl/gsl_math.h>
+// #include <gsl/gsl_math.h>
 
 #include "utils/utils.h"
 
@@ -18,11 +18,38 @@ void run_standard() {
 
     open_output_filestreams();
 
+    // TODO: parameter sanity checks
+
     build_coefficient_matrix(&data.coefficient_matrix, parameters.NDIMS, parameters.N);
 
     set_physics_variables();
 
-    initialise_data(&data);
+    // Allocate fields on the heap:
+    data.phi1      = (dtype *) calloc(length, sizeof(dtype));
+    data.phi2      = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot1   = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot2   = (dtype *) calloc(length, sizeof(dtype));
+    data.ker1_curr = (dtype *) calloc(length, sizeof(dtype));
+    data.ker2_curr = (dtype *) calloc(length, sizeof(dtype));
+    data.ker1_next = (dtype *) calloc(length, sizeof(dtype));
+    data.ker2_next = (dtype *) calloc(length, sizeof(dtype));
+    data.axion = NULL;
+    data.saxion = NULL;
+
+    // Assert allocations were successful:
+    assert(data.phi1 != NULL && data.phi2 != NULL && data.phidot1 != NULL && data.phidot2 != NULL);
+    assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
+
+    if (parameters.run_string_finding || parameters.save_snapshots) {
+        data.axion = (dtype *) calloc(length, sizeof(dtype));
+        assert(data.axion != NULL);
+    }
+
+    // Set initial field values:
+    gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
+
+    // Initialise kernels for the next time step:
+    kernels(data.ker1_next, data.ker2_next, data);
 
     if (parameters.run_string_finding) fprintf(fp_string_finding, "time,ncores\n");
 
@@ -48,14 +75,14 @@ void run_standard() {
             if (parameters.NDIMS == 2) {
                 std::vector <vec2i> s;
                 int num_cores = Cores2D(data.axion, &s);
-                float xi = num_cores * gsl_pow_2(time / tau);
+                float xi = num_cores * pow_2(time / tau);
                 fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
 
             if (parameters.NDIMS == 3) {
                 std::vector <vec3i> s;
                 int num_cores = Cores3D(data.axion, &s);
-                float xi = num_cores * gsl_pow_2(time / tau);
+                float xi = num_cores * pow_2(time / tau);
                 fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
             }
         }
@@ -96,7 +123,16 @@ void run_standard() {
     }
 
     // Free memory:
-    free_all_data(data);
+    free(data.phi1);
+    free(data.phi2);
+    free(data.phidot1);
+    free(data.phidot2);
+    free(data.ker1_curr);
+    free(data.ker2_curr);
+    free(data.ker1_next);
+    free(data.ker2_next);
+    free(data.axion);
+    free(data.saxion);
 
     close_output_filestreams();
 }
@@ -104,7 +140,7 @@ void run_standard() {
 
 static void debug(all_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
-        if (gsl_isnan(data.phi1[i]) || gsl_isnan(data.phi2[i])) {
+        if (std::isnan(data.phi1[i]) || std::isnan(data.phi2[i])) {
             fprintf(fp_main_output, "Error: NaN encountered in solution vector.\n");
             fprintf(fp_main_output, " tstep = %d\n", tstep);
             assert(0);

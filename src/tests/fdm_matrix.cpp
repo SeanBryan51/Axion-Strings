@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <gsl/gsl_math.h>
 #include <assert.h>
 
 #include "standard/common.h"
@@ -157,7 +156,7 @@ void test_fdm_matrix2D() {
         for (int j = 0; j < N; j++) {
             // compare discretised laplacian and actual laplacian
             dtype discretised_laplacian = laplacian[offset2(i,j,N)];
-            dtype actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
+            dtype actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
             assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
         }
     }
@@ -226,7 +225,7 @@ void test_fdm_matrix3D() {
             for (int k = 0; k < N; k++) {
                 // compare discretised laplacian and actual laplacian
                 dtype discretised_laplacian = laplacian[offset3(i,j,k,N)];
-                dtype actual_laplacian = - gsl_pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
+                dtype actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
                 assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
             }
         }
