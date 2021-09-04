@@ -4,8 +4,6 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     // TODO: implement multiple stencil widths
 
-    assert(NDIMS == 2 || NDIMS == 3);
-
     int length = get_length();
 
     // COO sparse matrix format data structures, see https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/appendix-a-linear-solvers-basics/sparse-matrix-storage-formats/sparse-blas-coordinate-matrix-storage-format.html for more details.
@@ -179,11 +177,11 @@ void gradient2D(dtype *dphi, dtype *phi) {
  */
 void velocity_verlet_scheme(all_data data) {
 
-    int N = parameters.N;
-    int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
+    int length = get_length();
     float dt = parameters.time_step;
 
     // TODO: ker1_curr is zero for the first time step... is this correct?
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
         data.phi1[i] += dt * (data.phidot1[i] + 0.5f * data.ker1_curr[i] * dt);
         data.phi2[i] += dt * (data.phidot2[i] + 0.5f * data.ker2_curr[i] * dt);
@@ -193,11 +191,13 @@ void velocity_verlet_scheme(all_data data) {
 
     kernels(data.ker1_next, data.ker2_next, data);
 
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
         data.phidot1[i] += 0.5f * (data.ker1_curr[i] + data.ker1_next[i]) * dt;
         data.phidot2[i] += 0.5f * (data.ker2_curr[i] + data.ker2_next[i]) * dt;
     }
 
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
         data.ker1_curr[i] = data.ker1_next[i];
         data.ker2_curr[i] = data.ker2_next[i];
@@ -211,24 +211,24 @@ void velocity_verlet_scheme(all_data data) {
  */
 void kernels(dtype *ker1, dtype *ker2, all_data data) {
 
-    int N = parameters.N;
-    int length = (parameters.NDIMS == 3) ? (N * N * N) : (N * N);
+    int length = get_length();
     float dx = parameters.space_step;
 
     mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, ker1);
 
     mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, ker2);
 
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        ker1[i] = ker1[i] - 2.0f / tau * data.phidot1[i]
-                          - parameters.lambdaPRS * data.phi1[i] * (
-                              pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                            + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
-                          );
-        ker2[i] = ker2[i] - 2.0f / tau * data.phidot2[i]
-                          - parameters.lambdaPRS * data.phi2[i] * (
-                              pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                            + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
-                          );
+        ker1[i] += - 2.0f / tau * data.phidot1[i]
+                   - parameters.lambdaPRS * data.phi1[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
+                   + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
+                   );
+        ker2[i] += - 2.0f / tau * data.phidot2[i]
+                   - parameters.lambdaPRS * data.phi2[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
+                   + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
+                   );
     }
 }

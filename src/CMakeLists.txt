@@ -8,7 +8,7 @@ add_executable(
 
 include_directories(/usr/local/Cellar/fftw/3.3.8_2/include)
 link_directories(/usr/local/Cellar/fftw/3.3.8_2/lib)
-target_link_options(main PUBLIC -I/usr/local/Cellar/fftw/3.3.8_2/include -L/usr/local/Cellar/fftw/3.3.8_2/lib -lfftw3 -lm)
+target_link_options(main PUBLIC -I/usr/local/Cellar/fftw/3.3.8_2/include -L/usr/local/Cellar/fftw/3.3.8_2/lib -lfftw3_omp -lfftw3 -lm)
 
 set(BLA_VENDOR Intel10_64lp)
 find_package(BLAS REQUIRED)

@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
     // Initialise global variables defined in parameters.h:
     read_parameter_file(argv[1]);
 
-    // TODO: parameter sanity checks
     printf("Running with %s\n", argv[1]);
 
     double start = omp_get_wtime();

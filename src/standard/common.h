@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <math.h>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "mkl.h"
 #include "mkl_vsl.h"
 #include "mkl_spblas.h"
+
 #include "../parameters.h"
 
 #ifdef USE_DOUBLE_PRECISION
@@ -18,6 +20,8 @@ typedef double dtype;
 #else
 typedef float dtype;
 #endif
+
+#define pow_2(v) ((v)*(v))
 
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))

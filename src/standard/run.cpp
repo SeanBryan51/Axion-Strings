@@ -17,15 +17,17 @@ void run_standard() {
 
     open_output_filestreams();
 
+    // TODO: parameter sanity checks
+
     build_coefficient_matrix(&data.coefficient_matrix, parameters.NDIMS, parameters.N);
 
     set_physics_variables();
 
     // Allocate fields on the heap:
-    data.phi1    = (dtype *) calloc(length, sizeof(dtype));
-    data.phi2    = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot1 = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot2 = (dtype *) calloc(length, sizeof(dtype));
+    data.phi1      = (dtype *) calloc(length, sizeof(dtype));
+    data.phi2      = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot1   = (dtype *) calloc(length, sizeof(dtype));
+    data.phidot2   = (dtype *) calloc(length, sizeof(dtype));
     data.ker1_curr = (dtype *) calloc(length, sizeof(dtype));
     data.ker2_curr = (dtype *) calloc(length, sizeof(dtype));
     data.ker1_next = (dtype *) calloc(length, sizeof(dtype));
@@ -33,7 +35,7 @@ void run_standard() {
     data.axion = NULL;
     data.saxion = NULL;
 
-    // Assert allocation was successful:
+    // Assert allocations were successful:
     assert(data.phi1 != NULL && data.phi2 != NULL && data.phidot1 != NULL && data.phidot2 != NULL);
     assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
 
@@ -42,7 +44,7 @@ void run_standard() {
         assert(data.axion != NULL);
     }
 
-    // Initialise fields:
+    // Set initial field values:
     gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
 
     // Initialise kernels for the next time step:
@@ -128,6 +130,8 @@ void run_standard() {
     free(data.ker2_curr);
     free(data.ker1_next);
     free(data.ker2_next);
+    free(data.axion);
+    free(data.saxion);
 
     close_output_filestreams();
 }
