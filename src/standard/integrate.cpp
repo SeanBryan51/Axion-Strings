@@ -6,16 +6,16 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     assert(NDIMS == 2 || NDIMS == 3);
 
+    int length = get_length();
+
     // COO sparse matrix format data structures, see https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/appendix-a-linear-solvers-basics/sparse-matrix-storage-formats/sparse-blas-coordinate-matrix-storage-format.html for more details.
     // NOTE: the following arrays are deallocated when we call mkl_sparse_destroy()
-    int length; // length of solution vector
     MKL_INT nnz;
     MKL_INT *rows;
     MKL_INT *cols;
     dtype *values;
 
     if (NDIMS == 2) {
-        length = N * N;
 
         // allocate COO sparse matrix format data structures:
         int num_bands = 1 + 4; // main diagonal + 4 main off diagonals (due to 4 lattice neighbours in 2D)
@@ -65,7 +65,6 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
     }
 
     if (NDIMS == 3) {
-        length = N * N * N;
 
         // allocate COO sparse matrix format data structures:
         int num_bands = 1 + 6; // main diagonal + 6 main off diagonals (due to 6 lattice neighbours in 3D)

@@ -34,7 +34,7 @@ static void shift3D(fftw_complex *arr, int N) {
     }
 }
 
-void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2) {
+void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
     int length = get_length(), N = parameters.N;
 
@@ -55,8 +55,12 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_3, 0.0f, 1.0f);
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_4, 0.0f, 1.0f);
 
+    int status = fftw_init_threads();
+    assert(status != 0);
+
+    fftw_plan_with_nthreads(omp_get_max_threads());
+
     if (parameters.NDIMS == 2) {
-        length = N * N;
 
         dtype *kx = (dtype *) calloc(N, sizeof(dtype));
         dtype *ky = (dtype *) calloc(N, sizeof(dtype));
@@ -102,6 +106,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         shift2D(phi, N);
         shift2D(phidot, N);
 
+        #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
             phi1[i] = phi[i][0]; // Re(phi)
             phi2[i] = phi[i][1]; // Im(phi)
@@ -120,7 +125,6 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     }
 
     if (parameters.NDIMS == 3) {
-        length = N * N * N;
 
         dtype *kx = (dtype *) calloc(N, sizeof(dtype));
         dtype *ky = (dtype *) calloc(N, sizeof(dtype));
@@ -166,6 +170,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
         shift3D(phi, N);
         shift3D(phidot, N);
 
+        #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
             phi1[i] = phi[i][0]; // Re(phi)
             phi2[i] = phi[i][1]; // Im(phi)
@@ -189,6 +194,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     // 1. Calculate mean.
     dtype phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
     phi1_mean = phi2_mean = phidot1_mean = phidot2_mean = 0.0f;
+    #pragma omp parallel for schedule(static) reduction(+:phi1_mean,phi2_mean,phidot1_mean,phidot2_mean)
     for (int i = 0; i < length; i++) {
         phi1_mean += phi1[i] / length;
         phi2_mean += phi2[i] / length;
@@ -199,6 +205,7 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     // 2. Calculate standard deviation.
     dtype phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
     phi1_sd = phi2_sd = phidot1_sd = phidot2_sd = 0.0f;
+    #pragma omp parallel for schedule(static) reduction(+:phi1_sd,phi2_sd,phidot1_sd,phidot2_sd)
     for (int i = 0; i < length; i++) {
         phi1_sd += pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
         phi2_sd += pow_2(phi2[i] - phi2_mean) / (length - 1.0f);
@@ -213,10 +220,13 @@ void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot
     // phidot2_sd = pow(phidot2_sd, 0.5);
 
     // 3. Normalise.
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
         phi1[i] = (phi1[i] - phi1_mean) / phi1_sd;
         phi2[i] = (phi2[i] - phi2_mean) / phi2_sd;
         phidot1[i] = (phidot1[i] - phidot1_mean) / phidot1_sd;
         phidot2[i] = (phidot2[i] - phidot2_mean) / phidot2_sd;
     }
+
+    fftw_cleanup_threads();
 }
