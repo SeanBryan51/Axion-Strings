@@ -4,7 +4,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     // TODO: implement multiple stencil widths
 
-    int length = get_length();
+    int length = (NDIMS == 3) ? (N * N * N) : (N * N);
 
     // COO sparse matrix format data structures, see https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/appendix-a-linear-solvers-basics/sparse-matrix-storage-formats/sparse-blas-coordinate-matrix-storage-format.html for more details.
     // NOTE: the following arrays are deallocated when we call mkl_sparse_destroy()
