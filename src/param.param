@@ -1,28 +1,37 @@
-% Parameter file:
+% Default parameter file:
 
-NDIMS               2 % Number of dimensions
+% Simulation parameters:
 
-% Standard (non-amr) simulation settings:
+lambdaPRS           1.0             % Value of quartic coupling in PQ potential.
+NDIMS               3               % Number of dimensions (2 or 3).
+N                   128             % Number of grid points.
+space_step          1.0             % Space step in dimensionless program units (default space_step=1).
+time_step           0.3333333333    % Time step in dimensionless program units (default 1/3 * space_step).
+seed                1998            % Seed used for random initial conditions.
 
-N                   256             % Number of grid points
-space_step          1.0             % Space step in dimensionless program units (default space_step=1)
-time_step           0.3333333333    % Time step in dimensionless program units
+% Output settings:
 
-fa_phys             1e12            % Physical value of fa in GeV
-lambdaPRS           1.0             % Quartic coupling 
-potential           Thermal         % Choose potential. Options: 'MexicanHat' or 'Thermal'
-time_variable       StringTension   % Options: 'StringTension', 'ConformalTime', 'CosmicTime',
-                                    % 'ScaleFactor' 
-run_string_finding  0
-thr                 1
-string_checks       40
-string_finding_output_file_path /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files/strings.csv
-
-save_snapshots      0
-n_snapshots         5
-output_directory    /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files
-
-write_output_file   0               % 0 : write output to stdout, 1 : write output to file
+write_output_file   0               % 0 : write output to stdout, 1 : write output to text file specified by output_file_path.
 output_file_path    /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files/output.txt
 
-seed                2021
+% Snapshots:
+
+save_snapshots      0               % Save snapshots (0 : no, 1 : yes).
+n_snapshots         5               % Number of snapshots.
+output_directory    /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files % Path to output directory.
+
+save_fields         1               % Save snapshot of fields (phi1, phi2) (0 : no, 1 : yes).
+save_strings        1               % Save snapshot of string plaquettes (0 : no, 1 : yes).
+
+% Time-series data:
+
+sample_time_series  1               % Output time series data to file specified by ts_output_path (0 : no, 1 : yes).
+n_samples           40              % Number of samples in time series.
+ts_output_path      /Users/seanbryan/Documents/UNI/2021T1/Project/Axion-Strings/output_files/time-series.csv
+
+sample_strings      1               % Output scaling parameter Xi (string scaling law) (0 : no, 1 : yes).
+sample_background   0               % Output background field values (phi1, phi2, phidot1, phidot2) (0 : no, 1 : yes).
+
+% String finding settings:
+
+thr                 1

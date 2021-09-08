@@ -48,6 +48,7 @@ typedef struct vec2i { int x; int y; } vec2i;
 typedef struct vec3i { int x; int y; int z; } vec3i;
 
 inline double pow_2(double x) { return x*x; }
+inline double pow_3(double x) { return x*x*x; }
 
 /*
  * Returns length of solution vector:
@@ -96,20 +97,18 @@ inline void coordinate3(int *i, int *j, int *k, int offset, int N) {
 extern float tau;                   // Dimensionless program time variable (in conformal time).
 extern float tau_initial;           // Initial conformal time.
 extern float T_initial;             // Initial temperature in units of f_a. Defined when H ~ f_a
-extern float t_phys_initial;        // Initial physical time.
-extern float R_initial;             // Initial scale factor.
 extern float reduced_planck_mass;   // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
-extern float m_saxion;              // Saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
+extern float m_saxion_initial;      // Initial value of saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
 extern float g_star;                // Relativistic degrees of freedom: 
 extern float m_eff_squared;         // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
 extern float light_crossing_time;   // Light crossing time: approximate time for light to travel one Hubble volume.
 void  set_physics_variables();
-float physical_time(float t_conformal);
-float scale_factor(float t_conformal);
-float hubble_parameter(float t_conformal);
-float temperature(float t_conformal);
-float string_tension(float t_confomal);
-float meff_squared(float t_conformal);
+float physical_time();
+float scale_factor();
+float hubble_parameter();
+float temperature();
+float string_tension();
+float meff_squared();
 
 // init.cpp
 void initialise_data(all_data *data);
@@ -126,8 +125,8 @@ void  velocity_verlet_scheme(all_data data);
 void  kernels(dtype *ker1, dtype *ker2, all_data data);
 
 // stringID.cpp
-int Cores2D(dtype *axion, std::vector <vec2i> *s);
-int Cores3D(dtype *axion, std::vector <vec3i> *s);
+int cores2(dtype *axion, std::vector <vec2i> &s);
+int cores3(dtype *axion, std::vector <vec3i> &s);
 
 // mkl_wrapper.cpp
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,
@@ -150,7 +149,7 @@ void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, co
 int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dtype *r, dtype a, dtype sigma);
 
 // fileio.cpp
-extern FILE *fp_main_output, *fp_string_finding;
+extern FILE *fp_main_output, *fp_time_series;
 void read_field_data(const char *filepath, dtype *data, int length);
 void save_data(char *file_name, dtype *data, int length);
 void save_strings2(char *file_name, std::vector <vec2i> *v);

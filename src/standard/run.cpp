@@ -6,9 +6,27 @@
 #include "common.h"
 #include "interface.h"
 
-static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep);
-static int should_count_strings(int tstep, int string_checks, int final_tstep);
-static void debug(all_data data, int length, int tstep);
+static void debug(all_data data, int length, int tstep) {
+    for (int i = 0; i < length; i++) {
+        if (isnan(data.phi1[i]) || isnan(data.phi2[i])) {
+            fprintf(fp_main_output, "Error: NaN encountered in solution vector.\n");
+            fprintf(fp_main_output, " tstep = %d\n", tstep);
+            assert(0);
+        }
+    }
+}
+
+static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
+    if (!parameters.save_snapshots) return 0;
+    // TODO: temporary solution
+    return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
+}
+
+static int should_sample_time_series(int tstep, int n_samples, int final_tstep) {
+    if (!parameters.sample_time_series) return 0;
+    // TODO: temporary solution
+    return tstep == 0 || tstep % (final_tstep / (n_samples - 1)) == 0;
+}
 
 void run_standard() {
 
@@ -39,7 +57,7 @@ void run_standard() {
     assert(data.phi1 != NULL && data.phi2 != NULL && data.phidot1 != NULL && data.phidot2 != NULL);
     assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
 
-    if (parameters.run_string_finding || parameters.save_snapshots) {
+    if ((parameters.save_snapshots && parameters.save_strings) || (parameters.sample_time_series && parameters.sample_strings)) {
         data.axion = (dtype *) calloc(length, sizeof(dtype));
         assert(data.axion != NULL);
     }
@@ -50,71 +68,119 @@ void run_standard() {
     // Initialise kernels for the next time step:
     kernels(data.ker1_next, data.ker2_next, data);
 
-    if (parameters.run_string_finding) fprintf(fp_string_finding, "time,ncores\n");
+    if (parameters.sample_time_series) {
+        fprintf(fp_time_series, "time,");
+        if (parameters.sample_strings) fprintf(fp_time_series, "xi,");
+        if (parameters.sample_background) fprintf(fp_time_series, "phi1_bar,phi2_bar,phidot1_bar,phidot2_bar");
+        fprintf(fp_time_series, "\n");
+    }
 
     int n_snapshots_written = 0;
-    int light_time = round(0.5f * parameters.N * parameters.space_step / parameters.time_step);
-    int final_step = light_time - round(1 * parameters.space_step / parameters.time_step) + 1;
-
+    // Note: should use the light crossing time in conformal time instead of physical time however this still works well.
+    int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
     for (int tstep = 0; tstep < final_step; tstep++) {
 
         debug(data, length, tstep);
 
         velocity_verlet_scheme(data);
 
-        float kappa = string_tension(tau);
-        float time = physical_time(tau);
-        float Hinv = 1.0f / hubble_parameter(tau);
+        if (should_sample_time_series(tstep, parameters.n_samples, final_step)) {
 
-        if (should_count_strings(tstep, parameters.string_checks, final_step)) {
+            fprintf(fp_time_series, "%f", physical_time());
 
-            // compute axion field: 
-            for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
+            if (parameters.sample_strings) {
 
-            if (parameters.NDIMS == 2) {
-                std::vector <vec2i> s;
-                int num_cores = Cores2D(data.axion, &s);
-                float xi = num_cores * pow_2(time / tau);
-                fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
+                // compute axion field:
+                #pragma omp parallel for schedule(static)
+                for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
+
+                if (parameters.NDIMS == 2) {
+                    // 2-dimensions:
+                    std::vector <vec2i> s;
+                    int n_plaquettes = cores2(data.axion, s);
+
+                    // Count neighbouring plaquettes:
+                    int count = 0;
+                    for (int i = 0; i < n_plaquettes - 1; i++) {
+                        int diff_y = s.at(i+1).y - s.at(i).y;
+                        int diff_x = s.at(i+1).x - s.at(i).x;
+                        if (diff_y == 0 && diff_x == 1) count += 1;
+                        if (diff_y == 1 && diff_x == 0) count += 1;
+                    }
+
+                    float t_phys = physical_time();
+                    int num_cores = n_plaquettes - count;
+                    float xi = num_cores * pow_2(t_phys / tau);
+                    fprintf(fp_time_series, ",%f", xi);
+
+                } else {
+                    // 3-dimensions:
+                    std::vector <vec3i> s;
+                    int n_plaquettes = cores3(data.axion, s);
+
+                    float total_length = n_plaquettes * 2.0f / 3.0f; // See Moore paper (arXiv:1509.00026) for factor 2/3 statistical correction.
+
+                    float t_phys = physical_time();
+                    float a = scale_factor();
+                    float physical_length = total_length * a;
+                    float physical_volume = pow_3(parameters.N * parameters.space_step * a);
+                    float xi = physical_length * pow_2(t_phys) / physical_volume;
+                    fprintf(fp_time_series, ",%f", xi);
+                }
             }
 
-            if (parameters.NDIMS == 3) {
-                std::vector <vec3i> s;
-                int num_cores = Cores3D(data.axion, &s);
-                float xi = num_cores * pow_2(time / tau);
-                fprintf(fp_string_finding, "%f, %d\n",time,num_cores);
+            if (parameters.sample_background) {
+                dtype phi1_bar, phi2_bar, phidot1_bar, phidot2_bar;
+                phi1_bar = phi2_bar = phidot1_bar = phidot2_bar = 0.0f;
+                #pragma omp parallel for schedule(static) reduction(+:phi1_bar,phi2_bar,phidot1_bar,phidot2_bar)
+                for (int i = 0; i < length; i++) {
+                    phi1_bar += data.phi1[i] / length;
+                    phi2_bar += data.phi2[i] / length;
+                    phidot1_bar += data.phidot1[i] / length;
+                    phidot2_bar += data.phidot2[i] / length;
+                }
+                fprintf(fp_time_series, ",%f,%f,%f,%f", phi1_bar, phi2_bar, phidot1_bar, phidot2_bar);
             }
+
+            fprintf(fp_time_series, "\n");
         }
 
         if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
+
             fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
 
             // output time variables:
-            fprintf(fp_main_output, "  string tension = %f\n", kappa);
-            fprintf(fp_main_output, "  time           = %f\n", time);
+            fprintf(fp_main_output, "  tau / f_a      = %f\n", tau);
+            fprintf(fp_main_output, "  [H/H_0]^{-1}   = %f\n", 1.0f / hubble_parameter());
+            fprintf(fp_main_output, "  string tension = %f\n", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
 
-            // file names:
-            char fname_phi1[50], fname_phi2[50], fname_strings[50];
-            sprintf(fname_phi1, "phi1-snapshot%d", n_snapshots_written);
-            sprintf(fname_phi2, "phi2-snapshot%d", n_snapshots_written);
-            sprintf(fname_strings, "string-pos-snapshot%d", n_snapshots_written);
+            if (parameters.save_fields) {
 
-            save_data(fname_phi1, data.phi1, length);
-            save_data(fname_phi2, data.phi2, length);
+                char fname_phi1[50], fname_phi2[50];
+                sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
+                sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
 
-            // compute axion field: 
-            for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
-
-            // save string positions:
-            if (parameters.NDIMS == 2) {
-                std::vector <vec2i> s;
-                Cores2D(data.axion, &s);
-                save_strings2(fname_strings, &s);
+                save_data(fname_phi1, data.phi1, length);
+                save_data(fname_phi2, data.phi2, length);
             }
-            if (parameters.NDIMS == 3) {
-                std::vector <vec3i> s;
-                Cores3D(data.axion, &s);
-                save_strings3(fname_strings, &s);
+
+            if (parameters.save_strings) {
+
+                char fname_strings[50];
+                sprintf(fname_strings, "snapshot%d-strings.csv", n_snapshots_written);
+
+                #pragma omp parallel for schedule(static)
+                for (int i = 0; i < length; i++) data.axion[i] = atan2(data.phi1[i], data.phi2[i]);
+
+                if (parameters.NDIMS == 2) {
+                    std::vector <vec2i> s;
+                    cores2(data.axion, s);
+                    save_strings2(fname_strings, &s);
+                } else {
+                    std::vector <vec3i> s;
+                    cores3(data.axion, s);
+                    save_strings3(fname_strings, &s);
+                }
             }
 
             n_snapshots_written++;
@@ -134,27 +200,4 @@ void run_standard() {
     free(data.saxion);
 
     close_output_filestreams();
-}
-
-
-static void debug(all_data data, int length, int tstep) {
-    for (int i = 0; i < length; i++) {
-        if (isnan(data.phi1[i]) || isnan(data.phi2[i])) {
-            fprintf(fp_main_output, "Error: NaN encountered in solution vector.\n");
-            fprintf(fp_main_output, " tstep = %d\n", tstep);
-            assert(0);
-        }
-    }
-}
-
-static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
-    if (!parameters.save_snapshots) return 0;
-    // TODO: temporary solution
-    return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
-}
-
-static int should_count_strings(int tstep, int string_checks, int final_tstep) {
-    if (!parameters.run_string_finding) return 0;
-    // TODO: temporary solution
-    return tstep == 0 || tstep % (final_tstep / (string_checks - 1)) == 0;
 }

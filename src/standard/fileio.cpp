@@ -1,6 +1,6 @@
 #include "common.h"
 
-FILE *fp_main_output, *fp_string_finding;
+FILE *fp_main_output, *fp_time_series;
 
 void read_field_data(const char *filepath, dtype *data, int length) {
 
@@ -70,14 +70,14 @@ void open_output_filestreams() {
         fp_main_output = stdout;
     }
 
-    // open string finding file stream:
-    if (parameters.run_string_finding) {
-        fp_string_finding = fopen(parameters.string_finding_output_file_path, "w");
-        assert(fp_string_finding != NULL);
+    // open time series file stream:
+    if (parameters.sample_time_series) {
+        fp_time_series = fopen(parameters.ts_output_path, "w");
+        assert(fp_time_series != NULL);
     }
 }
 
 void close_output_filestreams() {
     if (parameters.write_output_file) fclose(fp_main_output);
-    if (parameters.run_string_finding) fclose(fp_string_finding);
+    if (parameters.sample_time_series) fclose(fp_time_series);
 }

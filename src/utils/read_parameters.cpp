@@ -34,6 +34,11 @@ static int parameters_to_read(Parameter *p_list) {
 
     // Add additional parameters here:
 
+    strcpy(p_list[n_params].tag, "lambdaPRS");
+    p_list[n_params].addr = &parameters.lambdaPRS;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
     strcpy(p_list[n_params].tag, "NDIMS");
     p_list[n_params].addr = &parameters.NDIMS;
     p_list[n_params].type = INT;
@@ -54,43 +59,18 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = FLOAT;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "fa_phys");
-    p_list[n_params].addr = &parameters.fa_phys;
-    p_list[n_params].type = FLOAT;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "lambdaPRS");
-    p_list[n_params].addr = &parameters.lambdaPRS;
-    p_list[n_params].type = FLOAT;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "potential");
-    p_list[n_params].addr = &parameters.potential;
-    p_list[n_params].type = STRING;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "time_variable");
-    p_list[n_params].addr = &parameters.time_variable;
-    p_list[n_params].type = STRING;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "run_string_finding");
-    p_list[n_params].addr = &parameters.run_string_finding;
+    strcpy(p_list[n_params].tag, "seed");
+    p_list[n_params].addr = &parameters.seed;
     p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "thr");
-    p_list[n_params].addr = &parameters.thr;
+    strcpy(p_list[n_params].tag, "write_output_file");
+    p_list[n_params].addr = &parameters.write_output_file;
     p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "string_checks");
-    p_list[n_params].addr = &parameters.string_checks;
-    p_list[n_params].type = INT;
-    n_params++;
-
-    strcpy(p_list[n_params].tag, "string_finding_output_file_path");
-    p_list[n_params].addr = &parameters.string_finding_output_file_path;
+    strcpy(p_list[n_params].tag, "output_file_path");
+    p_list[n_params].addr = &parameters.output_file_path;
     p_list[n_params].type = STRING;
     n_params++;
 
@@ -109,21 +89,45 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = STRING;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "write_output_file");
-    p_list[n_params].addr = &parameters.write_output_file;
+    strcpy(p_list[n_params].tag, "save_fields");
+    p_list[n_params].addr = &parameters.save_fields;
     p_list[n_params].type = INT;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "output_file_path");
-    p_list[n_params].addr = &parameters.output_file_path;
+    strcpy(p_list[n_params].tag, "save_strings");
+    p_list[n_params].addr = &parameters.save_strings;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "sample_time_series");
+    p_list[n_params].addr = &parameters.sample_time_series;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "n_samples");
+    p_list[n_params].addr = &parameters.n_samples;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "ts_output_path");
+    p_list[n_params].addr = &parameters.ts_output_path;
     p_list[n_params].type = STRING;
     n_params++;
 
-    strcpy(p_list[n_params].tag, "seed");
-    p_list[n_params].addr = &parameters.seed;
+    strcpy(p_list[n_params].tag, "sample_strings");
+    p_list[n_params].addr = &parameters.sample_strings;
     p_list[n_params].type = INT;
     n_params++;
 
+    strcpy(p_list[n_params].tag, "sample_background");
+    p_list[n_params].addr = &parameters.sample_background;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "thr");
+    p_list[n_params].addr = &parameters.thr;
+    p_list[n_params].type = INT;
+    n_params++;
     return n_params;
 }
 
