@@ -124,7 +124,7 @@ void  gradient(dtype *dphi, dtype *phi);
 void  velocity_verlet_scheme(all_data data);
 void  kernels(dtype *ker1, dtype *ker2, all_data data);
 
-// stringID.cpp
+// string_finding.cpp
 int cores2(dtype *axion, std::vector <vec2i> &s);
 int cores3(dtype *axion, std::vector <vec3i> &s);
 

@@ -26,7 +26,7 @@ add_library(
     standard/run.cpp
     standard/init.cpp
     standard/integrate.cpp
-    standard/stringID.cpp
+    standard/string_finding.cpp
     standard/physics.cpp
     standard/mkl_wrapper.cpp
     standard/fileio.cpp
