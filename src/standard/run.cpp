@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <assert.h>
-
-#include "utils/utils.h"
-
 #include "common.h"
 #include "interface.h"
 
@@ -35,7 +30,9 @@ void run_standard() {
 
     open_output_filestreams();
 
-    // TODO: parameter sanity checks
+    // Sanity check on input parameters:
+    assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
+    assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
 
     build_coefficient_matrix(&data.coefficient_matrix, parameters.NDIMS, parameters.N);
 

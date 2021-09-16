@@ -159,19 +159,6 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
     return laplacian;
 }
 
-void gradient2D(dtype *dphi, dtype *phi) {
-
-    int N = parameters.N;
-
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            // TODO: is this the magnitude of the gradient?
-            // dphi[i,j] = ((-phi[np.mod(i+2,N),j]+8*phi[np.mod(i+1,N),j]-8*phi[i-1,j] + phi[i-2,j])\
-            //     + (-phi[i,np.mod(j+2,N)] + 8*phi[i,np.mod(j+1,N)] -8*phi[i,j-1] + phi[i,j-2]))/(12*dx) 
-        }
-    }
-}
-
 /*
  * Velocity-Verlet time evolution algorithm, see equation (125)
  * in arXiv:2006.15122v2 'The art of simulating the early
@@ -182,7 +169,6 @@ void velocity_verlet_scheme(all_data data) {
     int length = get_length();
     float dt = parameters.time_step;
 
-    // TODO: ker1_curr is zero for the first time step... is this correct?
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
         data.phi1[i] += dt * (data.phidot1[i] + 0.5f * data.ker1_curr[i] * dt);

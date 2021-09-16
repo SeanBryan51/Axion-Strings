@@ -37,6 +37,7 @@ static void shift3D(fftw_complex *arr, int N) {
 void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
 
     int length = get_length(), N = parameters.N;
+    float L = parameters.space_step * N;
 
     // Set up rng stream:
     VSLStreamStatePtr stream;
@@ -68,7 +69,7 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         assert(kx != NULL && ky != NULL);
 
         for(int i = 0; i < N; i++) {
-            kx[i] = ky[i] = - N / 2.0f + i;
+            kx[i] = ky[i] = (- N / 2.0f + i) * 2.0f * M_PI / L;
         }
 
         fftw_complex *phi_k, *phi, *phidot_k, *phidot;
@@ -88,11 +89,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
             coordinate2(&i, &j, m, N);
 
             dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-            dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
+            dtype omegak = sqrt(pow_2(k) + m_eff_squared);
             dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-            // TODO: okay to remove L normalisation inside sqrt?
-            dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
-            dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
+            // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
+            dtype amplitude = sqrt(pow_2(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
+            dtype amplitude_dot = sqrt(pow_2(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
 
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
@@ -133,7 +134,7 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         assert(kx != NULL && ky != NULL && kz != NULL);
 
         for(int i = 0; i < N; i++) {
-            kx[i] = ky[i] = kz[i] = - N / 2.0f + i;
+            kx[i] = ky[i] = kz[i] = (- N / 2.0f + i) * 2.0f * M_PI / L;
         }
 
         fftw_complex *phi_k, *phi, *phidot_k, *phidot;
@@ -152,11 +153,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
             int i, j, l;
             coordinate3(&i, &j, &l, m, N);
             dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-            dtype omegak = sqrt(pow_2(k * M_PI / N) + m_eff_squared);
+            dtype omegak = sqrt(pow_2(k) + m_eff_squared);
             dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-            // TODO: okay to remove L normalisation inside sqrt?
-            dtype amplitude = sqrt(bose / omegak); // Power spectrum for phi
-            dtype amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
+            // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
+            dtype amplitude = sqrt(pow_3(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
+            dtype amplitude_dot = sqrt(pow_3(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
 
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
@@ -214,10 +215,10 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
     }
 
     // TODO: uncommenting the following causes the simulation to diverge! WHY
-    // phi1_sd = pow(phi1_sd, 0.5);
-    // phi2_sd = pow(phi2_sd, 0.5);
-    // phidot1_sd = pow(phidot1_sd, 0.5);
-    // phidot2_sd = pow(phidot2_sd, 0.5);
+    // phi1_sd = sqrt(phi1_sd);
+    // phi2_sd = sqrt(phi2_sd);
+    // phidot1_sd = sqrt(phidot1_sd);
+    // phidot2_sd = sqrt(phidot2_sd);
 
     // 3. Normalise.
     #pragma omp parallel for schedule(static)
@@ -229,4 +230,8 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
     }
 
     fftw_cleanup_threads();
+    free(rng_array_1);
+    free(rng_array_2);
+    free(rng_array_3);
+    free(rng_array_4);
 }

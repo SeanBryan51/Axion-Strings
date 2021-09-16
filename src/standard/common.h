@@ -111,16 +111,12 @@ float string_tension();
 float meff_squared();
 
 // init.cpp
-void initialise_data(all_data *data);
-void free_all_data(all_data data);
-void init_noise(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
-void gaussian_thermal(dtype * phi1, dtype * phi2, dtype * phidot1, dtype *phidot2);
+void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2);
 
 // integrate.cpp
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
 dtype laplacian2D(dtype *phi, int i, int j, float dx, int N);
 dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
-void  gradient(dtype *dphi, dtype *phi);
 void  velocity_verlet_scheme(all_data data);
 void  kernels(dtype *ker1, dtype *ker2, all_data data);
 
