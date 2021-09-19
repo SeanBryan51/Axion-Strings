@@ -43,12 +43,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
     VSLStreamStatePtr stream;
     vslNewStream(&stream, VSL_BRNG_SFMT19937, parameters.seed);
 
-    dtype *rng_array_1 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *rng_array_2 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *rng_array_3 = (dtype *) calloc(length, sizeof(dtype));
-    dtype *rng_array_4 = (dtype *) calloc(length, sizeof(dtype));
-
-    assert(rng_array_1 != NULL && rng_array_2 != NULL && rng_array_3 != NULL && rng_array_4 != NULL);
+    // Use input solution vectors to store random numbers for now:
+    dtype *rng_array_1 = phi1;
+    dtype *rng_array_2 = phi2;
+    dtype *rng_array_3 = phidot1;
+    dtype *rng_array_4 = phidot2;
 
     // Fill arrays with random numbers:
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_1, 0.0f, 1.0f);
@@ -87,13 +86,18 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         for (int m = 0; m < length; m++) {
             int i, j;
             coordinate2(&i, &j, m, N);
-
-            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + 1e-10);
-            dtype omegak = sqrt(pow_2(k) + m_eff_squared);
-            dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-            // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
-            dtype amplitude = sqrt(pow_2(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
-            dtype amplitude_dot = sqrt(pow_2(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j]);
+            dtype amplitude, amplitude_dot;
+            if (k != 0.0f) {
+                dtype omegak = sqrt(pow_2(k) + m_eff_squared);
+                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
+                amplitude = sqrt(pow_2(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
+                amplitude_dot = sqrt(pow_2(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+            } else {
+                amplitude = 0.0f; // Choose average value of the fields to be zero.
+                amplitude_dot = 0.0f;
+            }
 
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
@@ -109,10 +113,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
 
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
-            phi1[i] = phi[i][0]; // Re(phi)
-            phi2[i] = phi[i][1]; // Im(phi)
-            phidot1[i] = phidot[i][0]; // Re(phidot)
-            phidot2[i] = phidot[i][1]; // Im(phidot)
+            // Remember to include normalisation of the dft.
+            phi1[i] = phi[i][0] / pow_2(N); // Re(phi)
+            phi2[i] = phi[i][1] / pow_2(N); // Im(phi)
+            phidot1[i] = phidot[i][0] / pow_2(N); // Re(phidot)
+            phidot2[i] = phidot[i][1] / pow_2(N); // Im(phidot)
         }
 
         fftw_destroy_plan(p1);
@@ -152,12 +157,18 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         for (int m = 0; m < length; m++) {
             int i, j, l;
             coordinate3(&i, &j, &l, m, N);
-            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l] + 1e-10);
-            dtype omegak = sqrt(pow_2(k) + m_eff_squared);
-            dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-            // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
-            dtype amplitude = sqrt(pow_3(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
-            dtype amplitude_dot = sqrt(pow_3(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l]);
+            dtype amplitude, amplitude_dot;
+            if (k != 0.0f) {
+                dtype omegak = sqrt(pow_2(k) + m_eff_squared);
+                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
+                amplitude = sqrt(pow_3(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
+                amplitude_dot = sqrt(pow_3(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+            } else {
+                amplitude = 0.0f; // Choose average value of the fields to be zero.
+                amplitude = 0.0f;
+            }
 
             phi_k[m][0] = amplitude * rng_array_1[m];
             phi_k[m][1] = amplitude * rng_array_2[m];
@@ -173,10 +184,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
 
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < length; i++) {
-            phi1[i] = phi[i][0]; // Re(phi)
-            phi2[i] = phi[i][1]; // Im(phi)
-            phidot1[i] = phidot[i][0]; // Re(phidot)
-            phidot2[i] = phidot[i][1]; // Im(phidot)
+            // Remember to include normalisation of the dft.
+            phi1[i] = phi[i][0] / pow_3(N); // Re(phi)
+            phi2[i] = phi[i][1] / pow_3(N); // Im(phi)
+            phidot1[i] = phidot[i][0] / pow_3(N); // Re(phidot)
+            phidot2[i] = phidot[i][1] / pow_3(N); // Im(phidot)
         }
 
         fftw_destroy_plan(p1);
@@ -190,48 +202,5 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         free(kz);
     }
 
-    // TODO: what order of magnitude should the fluctuations in the field be?
-
-    // 1. Calculate mean.
-    dtype phi1_mean, phi2_mean, phidot1_mean, phidot2_mean;
-    phi1_mean = phi2_mean = phidot1_mean = phidot2_mean = 0.0f;
-    #pragma omp parallel for schedule(static) reduction(+:phi1_mean,phi2_mean,phidot1_mean,phidot2_mean)
-    for (int i = 0; i < length; i++) {
-        phi1_mean += phi1[i] / length;
-        phi2_mean += phi2[i] / length;
-        phidot1_mean += phidot1[i] / length;
-        phidot2_mean += phidot2[i] / length;
-    }
-
-    // 2. Calculate standard deviation.
-    dtype phi1_sd, phi2_sd, phidot1_sd, phidot2_sd;
-    phi1_sd = phi2_sd = phidot1_sd = phidot2_sd = 0.0f;
-    #pragma omp parallel for schedule(static) reduction(+:phi1_sd,phi2_sd,phidot1_sd,phidot2_sd)
-    for (int i = 0; i < length; i++) {
-        phi1_sd += pow_2(phi1[i] - phi1_mean) / (length - 1.0f);
-        phi2_sd += pow_2(phi2[i] - phi2_mean) / (length - 1.0f);
-        phidot1_sd += pow_2(phidot1[i] - phidot1_mean) / (length - 1.0f);
-        phidot2_sd += pow_2(phidot2[i] - phidot2_mean) / (length - 1.0f);
-    }
-
-    // TODO: uncommenting the following causes the simulation to diverge! WHY
-    // phi1_sd = sqrt(phi1_sd);
-    // phi2_sd = sqrt(phi2_sd);
-    // phidot1_sd = sqrt(phidot1_sd);
-    // phidot2_sd = sqrt(phidot2_sd);
-
-    // 3. Normalise.
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < length; i++) {
-        phi1[i] = (phi1[i] - phi1_mean) / phi1_sd;
-        phi2[i] = (phi2[i] - phi2_mean) / phi2_sd;
-        phidot1[i] = (phidot1[i] - phidot1_mean) / phidot1_sd;
-        phidot2[i] = (phidot2[i] - phidot2_mean) / phidot2_sd;
-    }
-
     fftw_cleanup_threads();
-    free(rng_array_1);
-    free(rng_array_2);
-    free(rng_array_3);
-    free(rng_array_4);
 }

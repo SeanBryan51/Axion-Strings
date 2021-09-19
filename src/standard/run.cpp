@@ -62,6 +62,14 @@ void run_standard() {
     // Set initial field values:
     gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
 
+#if 0
+    // Save initial conditions:
+    char tmp1[] = "phi1-initial";
+    char tmp2[] = "phi2-initial";
+    save_data(tmp1, data.phi1, length);
+    save_data(tmp2, data.phi2, length);
+#endif
+
     // Initialise kernels for the next time step:
     kernels(data.ker1_next, data.ker2_next, data);
 
@@ -73,7 +81,7 @@ void run_standard() {
     }
 
     int n_snapshots_written = 0;
-    // Note: should use the light crossing time in conformal time instead of physical time however this still works well.
+    // Note: should use the light crossing time in conformal time instead of in physical time however this still works well.
     int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
     for (int tstep = 0; tstep < final_step; tstep++) {
 
