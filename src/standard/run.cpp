@@ -62,16 +62,16 @@ void run_standard() {
     // Set initial field values:
     gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
 
-#if 0
-    // Save initial conditions:
-    char tmp1[] = "phi1-initial";
-    char tmp2[] = "phi2-initial";
-    save_data(tmp1, data.phi1, length);
-    save_data(tmp2, data.phi2, length);
-#endif
-
     // Initialise kernels for the next time step:
     kernels(data.ker1_next, data.ker2_next, data);
+
+    if (parameters.save_snapshots) {
+        fprintf(fp_snapshot_timings, "snapshot,");
+        fprintf(fp_snapshot_timings, "tau,");
+        fprintf(fp_snapshot_timings, "hubble_scale,");
+        fprintf(fp_snapshot_timings, "string_tension,");
+        fprintf(fp_snapshot_timings, "\n");
+    }
 
     if (parameters.sample_time_series) {
         fprintf(fp_time_series, "time,");
@@ -84,10 +84,6 @@ void run_standard() {
     // Note: should use the light crossing time in conformal time instead of in physical time however this still works well.
     int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
     for (int tstep = 0; tstep < final_step; tstep++) {
-
-        debug(data, length, tstep);
-
-        velocity_verlet_scheme(data);
 
         if (should_sample_time_series(tstep, parameters.n_samples, final_step)) {
 
@@ -154,10 +150,12 @@ void run_standard() {
 
             fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
 
-            // output time variables:
-            fprintf(fp_main_output, "  tau / f_a      = %f\n", tau);
-            fprintf(fp_main_output, "  [H/H_0]^{-1}   = %f\n", 1.0f / hubble_parameter());
-            fprintf(fp_main_output, "  string tension = %f\n", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            // output snapshot timings:
+            fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
+            fprintf(fp_snapshot_timings, "%f,", tau);
+            fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "\n");
 
             if (parameters.save_fields) {
 
@@ -190,6 +188,11 @@ void run_standard() {
 
             n_snapshots_written++;
         }
+
+        debug(data, length, tstep);
+
+        velocity_verlet_scheme(data);
+
     }
 
     // Free memory:

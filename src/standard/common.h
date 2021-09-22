@@ -95,7 +95,6 @@ inline void coordinate3(int *i, int *j, int *k, int offset, int N) {
 
 // physics.cpp
 extern float tau;                   // Dimensionless program time variable (in conformal time).
-extern float tau_initial;           // Initial conformal time.
 extern float T_initial;             // Initial temperature in units of f_a. Defined when H ~ f_a
 extern float reduced_planck_mass;   // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
 extern float m_saxion_initial;      // Initial value of saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
@@ -145,7 +144,7 @@ void mkl_copy (const MKL_INT n, const dtype *x, const MKL_INT incx, dtype *y, co
 int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dtype *r, dtype a, dtype sigma);
 
 // fileio.cpp
-extern FILE *fp_main_output, *fp_time_series;
+extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 void read_field_data(const char *filepath, dtype *data, int length);
 void save_data(char *file_name, dtype *data, int length);
 void save_strings2(char *file_name, std::vector <vec2i> *v);

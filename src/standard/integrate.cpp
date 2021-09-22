@@ -211,12 +211,12 @@ void kernels(dtype *ker1, dtype *ker2, all_data data) {
         ker1[i] += - 2.0f / tau * data.phidot1[i]
                    - parameters.lambdaPRS * data.phi1[i] * (
                      pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                   + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
+                   + pow_2(T_initial) / (3.0f * pow_2(tau))
                    );
         ker2[i] += - 2.0f / tau * data.phidot2[i]
                    - parameters.lambdaPRS * data.phi2[i] * (
                      pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                   + pow_2(T_initial) / (3.0f * pow_2(tau / tau_initial))
+                   + pow_2(T_initial) / (3.0f * pow_2(tau))
                    );
     }
 }

@@ -1,6 +1,6 @@
 #include "common.h"
 
-FILE *fp_main_output, *fp_time_series;
+FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 
 void read_field_data(const char *filepath, dtype *data, int length) {
 
@@ -70,6 +70,14 @@ void open_output_filestreams() {
         fp_main_output = stdout;
     }
 
+    if (parameters.save_snapshots) {
+        char *path = (char *) alloca(sizeof(parameters.output_directory) + 21 + 1);
+        assert(path != NULL);
+        sprintf(path, "%s/snapshot-timings.csv", parameters.output_directory);
+        fp_snapshot_timings = fopen(path, "w");
+        assert(fp_snapshot_timings != NULL);
+    }
+
     // open time series file stream:
     if (parameters.sample_time_series) {
         fp_time_series = fopen(parameters.ts_output_path, "w");
@@ -79,5 +87,6 @@ void open_output_filestreams() {
 
 void close_output_filestreams() {
     if (parameters.write_output_file) fclose(fp_main_output);
+    if (parameters.save_snapshots) fclose(fp_snapshot_timings);
     if (parameters.sample_time_series) fclose(fp_time_series);
 }

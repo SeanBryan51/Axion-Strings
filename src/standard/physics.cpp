@@ -1,7 +1,6 @@
 #include "common.h"
 
 float tau;
-float tau_initial;
 float T_initial;
 float reduced_planck_mass;
 float m_saxion_initial;
@@ -17,9 +16,6 @@ void set_physics_variables() {
     // Saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
     m_saxion_initial = sqrtf(parameters.lambdaPRS);
 
-    // Initial conformal time.
-    tau_initial = 1.0f - parameters.time_step;
-
     // Initial temperature in units of f_a.
     // Note: only need to set T to some value greater than sqrt(3)*(fa)
     // to simulate the PQ phase transition.
@@ -33,7 +29,7 @@ void set_physics_variables() {
     light_crossing_time = 0.5f * parameters.N * parameters.space_step;
 
     // Dimensionless program time variable (in conformal time).
-    tau = tau_initial;
+    tau = 1.0f;
 }
 
 /*
@@ -53,14 +49,14 @@ float scale_factor() {
  * Note: H is normalised with respect to its initial value H / H_0.
  */
 float hubble_parameter() {
-    return 1.0f / pow_2(tau / tau_initial);
+    return 1.0f / pow_2(tau);
 }
 
 /*
  * Temperature in units of f_a.
  */
 float temperature() {
-    return T_initial / (tau / tau_initial);
+    return T_initial / (tau);
 }
 
 /*
