@@ -34,8 +34,6 @@ typedef struct _all_data {
     dtype *ker2_curr; // current kernel for phi_2 equation of motion
     dtype *ker1_next; // next kernel for phi_1 equation of motion
     dtype *ker2_next; // next kernel for phi_2 equation of motion
-    // dtype *dvdphi1; // potential term in phi_1 equation of motion
-    // dtype *dvdphi2; // potential term in phi_2 equation of motion
 
     dtype *axion; // axion field values
     dtype *saxion; // saxion field values
@@ -49,6 +47,7 @@ typedef struct vec3i { int x; int y; int z; } vec3i;
 
 inline double pow_2(double x) { return x*x; }
 inline double pow_3(double x) { return x*x*x; }
+inline double pow_4(double x) { return x*x*x*x; }
 
 /*
  * Returns length of solution vector:
@@ -116,8 +115,8 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2);
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
 dtype laplacian2D(dtype *phi, int i, int j, float dx, int N);
 dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N);
-void  velocity_verlet_scheme(all_data data);
-void  kernels(dtype *ker1, dtype *ker2, all_data data);
+void  vvsl_field_rescaled(all_data data);
+void  vvsl_hamiltonian_form(all_data data);
 
 // string_finding.cpp
 int cores2(dtype *axion, std::vector <vec2i> &s);

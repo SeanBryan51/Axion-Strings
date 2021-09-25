@@ -160,11 +160,61 @@ dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
 }
 
 /*
- * Velocity-Verlet time evolution algorithm, see equation (125)
+ * Compute the kernel given the fields.
+ */
+static void kernels_field_rescaled(dtype *ker1, dtype *ker2, all_data data) {
+
+    // Field rescaled equation of motion:
+    int length = get_length();
+    float dx = parameters.space_step;
+
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, ker1);
+
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, ker2);
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < length; i++) {
+        ker1[i] += // - 2.0f / tau * data.phidot1[i]
+                   - 1.0f/pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau)
+                   + pow_2(T_initial) / (3.0f)
+                   );
+        ker2[i] += // - 2.0f / tau * data.phidot2[i]
+                   - 1.0f/pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau)
+                   + pow_2(T_initial) / (3.0f)
+                   );
+    }
+}
+
+static void kernels_hamiltonian_form(dtype *ker1, dtype *ker2, all_data data) {
+
+    int length = get_length();
+    float dx = parameters.space_step;
+
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, ker1);
+
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, ker2);
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < length; i++) {
+        ker1[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f
+                   + pow_2(T_initial) / (3.0f * pow_2(tau))
+                   );
+        ker2[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (
+                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f
+                   + pow_2(T_initial) / (3.0f * pow_2(tau))
+                   );
+    }
+}
+
+/*
+ * Velocity-Verlet (synchronised leapfrog) time evolution algorithm, see equation (125)
  * in arXiv:2006.15122v2 'The art of simulating the early
  * Universe'.
  */
-void velocity_verlet_scheme(all_data data) {
+void vvsl_field_rescaled(all_data data) {
 
     int length = get_length();
     float dt = parameters.time_step;
@@ -177,7 +227,7 @@ void velocity_verlet_scheme(all_data data) {
 
     tau = tau + dt;
 
-    kernels(data.ker1_next, data.ker2_next, data);
+    kernels_field_rescaled(data.ker1_next, data.ker2_next, data);
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
@@ -192,31 +242,30 @@ void velocity_verlet_scheme(all_data data) {
     }
 }
 
-/*
- * Performs the following element-wise addition to compute the kernel given the fields:
- *  K1 = Laplacian(phi1,dx,N) - 2*(Era/tau)*phidot1 - lambdaPRS*phi1*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*tau**2.0))
- *  K2 = Laplacian(phi2,dx,N) - 2*(Era/tau)*phidot2 - lambdaPRS*phi2*(phi1**2.0+phi2**2.0 - 1 + (T0/L)**2.0/(3.0*tau**2.0))
- */
-void kernels(dtype *ker1, dtype *ker2, all_data data) {
+void vvsl_hamiltonian_form(all_data data) {
 
     int length = get_length();
-    float dx = parameters.space_step;
+    float dt = parameters.time_step;
 
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, ker1);
-
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, ker2);
+    tau = tau + dt;
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        ker1[i] += - 2.0f / tau * data.phidot1[i]
-                   - parameters.lambdaPRS * data.phi1[i] * (
-                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                   + pow_2(T_initial) / (3.0f * pow_2(tau))
-                   );
-        ker2[i] += - 2.0f / tau * data.phidot2[i]
-                   - parameters.lambdaPRS * data.phi2[i] * (
-                     pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1
-                   + pow_2(T_initial) / (3.0f * pow_2(tau))
-                   );
+        data.phi1[i] += dt / pow_2(tau) * (data.phidot1[i] + 0.5f * dt * data.ker1_curr[i]);
+        data.phi2[i] += dt / pow_2(tau) * (data.phidot2[i] + 0.5f * dt * data.ker2_curr[i]);
+    }
+
+    kernels_hamiltonian_form(data.ker1_next, data.ker2_next, data);
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < length; i++) {
+        data.phidot1[i] += 0.5f * (data.ker1_curr[i] + data.ker1_next[i]) * dt;
+        data.phidot2[i] += 0.5f * (data.ker2_curr[i] + data.ker2_next[i]) * dt;
+    }
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < length; i++) {
+        data.ker1_curr[i] = data.ker1_next[i];
+        data.ker2_curr[i] = data.ker2_next[i];
     }
 }

@@ -62,9 +62,6 @@ void run_standard() {
     // Set initial field values:
     gaussian_thermal(data.phi1, data.phi2, data.phidot1, data.phidot2);
 
-    // Initialise kernels for the next time step:
-    kernels(data.ker1_next, data.ker2_next, data);
-
     if (parameters.save_snapshots) {
         fprintf(fp_snapshot_timings, "snapshot,");
         fprintf(fp_snapshot_timings, "tau,");
@@ -191,7 +188,8 @@ void run_standard() {
 
         debug(data, length, tstep);
 
-        velocity_verlet_scheme(data);
+        vvsl_field_rescaled(data);
+        // vvsl_hamiltonian_form(data);
 
     }
 
