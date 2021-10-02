@@ -91,9 +91,8 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
             if (k != 0.0f) {
                 dtype omegak = sqrt(pow_2(k) + m_eff_squared);
                 dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-                // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
-                amplitude = sqrt(pow_2(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
-                amplitude_dot = sqrt(pow_2(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+                amplitude = sqrt(bose / omegak); // Power spectrum for phi
+                amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
             } else {
                 amplitude = 0.0f; // Choose average value of the fields to be zero.
                 amplitude_dot = 0.0f;
@@ -162,9 +161,8 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
             if (k != 0.0f) {
                 dtype omegak = sqrt(pow_2(k) + m_eff_squared);
                 dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
-                // Note: factors of 2 pi / L follow from conventions used in arXiv:astro-ph/0103301v1
-                amplitude = sqrt(pow_3(2.0f * M_PI / L) * bose / omegak); // Power spectrum for phi
-                amplitude_dot = sqrt(pow_3(2.0f * M_PI / L) * bose * omegak); // Power spectrum for phidot
+                amplitude = sqrt(bose / omegak); // Power spectrum for phi
+                amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
             } else {
                 amplitude = 0.0f; // Choose average value of the fields to be zero.
                 amplitude = 0.0f;
