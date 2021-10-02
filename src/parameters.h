@@ -12,6 +12,7 @@ extern struct _parameters {
     int   N;
     float space_step;
     float time_step;
+    int   stencil_setting;
     unsigned int seed;
 
     int  write_output_file;

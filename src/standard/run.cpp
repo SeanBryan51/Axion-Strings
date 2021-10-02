@@ -73,7 +73,7 @@ void run_standard() {
     if (parameters.sample_time_series) {
         fprintf(fp_time_series, "time,");
         if (parameters.sample_strings) fprintf(fp_time_series, "xi,");
-        if (parameters.sample_background) fprintf(fp_time_series, "phi1_bar,phi2_bar,phidot1_bar,phidot2_bar");
+        if (parameters.sample_background) fprintf(fp_time_series, "phi1_bar,phi2_bar,phidot1_bar,phidot2_bar,axion_bar,saxion_bar");
         fprintf(fp_time_series, "\n");
     }
 
@@ -96,6 +96,8 @@ void run_standard() {
                     // 2-dimensions:
                     std::vector <vec2i> s;
                     int n_plaquettes = cores2(data.axion, s);
+
+                    // TODO: replace with statistical estimate?
 
                     // Count neighbouring plaquettes:
                     int count = 0;
@@ -128,16 +130,18 @@ void run_standard() {
             }
 
             if (parameters.sample_background) {
-                dtype phi1_bar, phi2_bar, phidot1_bar, phidot2_bar;
-                phi1_bar = phi2_bar = phidot1_bar = phidot2_bar = 0.0f;
+                dtype phi1_bar, phi2_bar, phidot1_bar, phidot2_bar, axion_bar, saxion_bar;
+                phi1_bar = phi2_bar = phidot1_bar = phidot2_bar = axion_bar = saxion_bar = 0.0f;
                 #pragma omp parallel for schedule(static) reduction(+:phi1_bar,phi2_bar,phidot1_bar,phidot2_bar)
                 for (int i = 0; i < length; i++) {
-                    phi1_bar += data.phi1[i] / length;
-                    phi2_bar += data.phi2[i] / length;
-                    phidot1_bar += data.phidot1[i] / length;
-                    phidot2_bar += data.phidot2[i] / length;
+                    phi1_bar += data.phi1[i];
+                    phi2_bar += data.phi2[i];
+                    phidot1_bar += data.phidot1[i];
+                    phidot2_bar += data.phidot2[i];
+                    axion_bar += atan2(data.phi1[i], data.phi2[i]);
+                    saxion_bar += sqrt(pow_2(data.phi1[i]) + pow_2(data.phi2[i]));
                 }
-                fprintf(fp_time_series, ",%f,%f,%f,%f", phi1_bar, phi2_bar, phidot1_bar, phidot2_bar);
+                fprintf(fp_time_series, ",%f,%f,%f,%f,%f,%f", phi1_bar / length, phi2_bar / length, phidot1_bar / length, phidot2_bar / length, axion_bar / length, saxion_bar / length);
             }
 
             fprintf(fp_time_series, "\n");
