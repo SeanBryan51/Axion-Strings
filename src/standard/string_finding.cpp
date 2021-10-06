@@ -3,25 +3,29 @@
 int cores2(dtype *field, std::vector <vec2i> &list) {
 
     int N = parameters.N;
+    int length = get_length();
     int thr = parameters.thr;
     dtype accept = 0.5f - 0.5f*thr/100;
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++){
+    #pragma omp declare reduction (merge : std::vector<vec2i> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
-            dtype norm1 = (field[offset2(i,j,N)] + M_PI)/(2*M_PI);
-            dtype norm2 = (field[offset2(i+1,j,N)] + M_PI)/(2*M_PI);
-            dtype norm3 = (field[offset2(i+1,j+1,N)] + M_PI)/(2*M_PI);
-            dtype norm4 = (field[offset2(i,j+1,N)] + M_PI)/(2*M_PI);
+    #pragma omp parallel for reduction(merge: list)
+    for (int m = 0; m < length; m++) {
+        int i, j;
+        coordinate2(&i, &j, m, N);
 
-            dtype theta1 = std::min(abs(norm2-norm1),1-abs(norm2-norm1));
-            dtype theta2 = std::min(abs(norm3-norm2),1-abs(norm3-norm2));
-            dtype theta3 = std::min(abs(norm4-norm3),1-abs(norm4-norm3));
-            dtype theta_sum = theta1 + theta2 + theta3;
+        dtype norm1 = (field[offset2(i,j,N)] + M_PI)/(2*M_PI);
+        dtype norm2 = (field[offset2(i+1,j,N)] + M_PI)/(2*M_PI);
+        dtype norm3 = (field[offset2(i+1,j+1,N)] + M_PI)/(2*M_PI);
+        dtype norm4 = (field[offset2(i,j+1,N)] + M_PI)/(2*M_PI);
 
-            if (theta_sum > accept) {
-                list.push_back((vec2i) {i, j});
-            }
+        dtype theta1 = std::min(abs(norm2-norm1),1-abs(norm2-norm1));
+        dtype theta2 = std::min(abs(norm3-norm2),1-abs(norm3-norm2));
+        dtype theta3 = std::min(abs(norm4-norm3),1-abs(norm4-norm3));
+        dtype theta_sum = theta1 + theta2 + theta3;
+
+        if (theta_sum > accept) {
+            list.push_back((vec2i) {i, j});
         }
     }
 
