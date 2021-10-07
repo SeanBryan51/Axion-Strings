@@ -2,17 +2,17 @@
 
 FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 
-void read_field_data(const char *filepath, dtype *data, int length) {
+void read_field_data(const char *filepath, data_t *data, int length) {
 
     FILE *fp = fopen(filepath, "r");
     assert(fp != NULL);
 
-    fread(data, sizeof(dtype), length, fp);
+    fread(data, sizeof(data_t), length, fp);
 
     fclose(fp);
 }
 
-void save_data(char *file_name, dtype *data, int length) {
+void save_data(char *file_name, data_t *data, int length) {
 
     char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
     assert(path != NULL);
@@ -23,7 +23,7 @@ void save_data(char *file_name, dtype *data, int length) {
     FILE *fp = fopen(path, "w");
     assert(fp != NULL);
 
-    fwrite(data, sizeof(dtype), length, fp);
+    fwrite(data, sizeof(data_t), length, fp);
 
     fclose(fp);
 }

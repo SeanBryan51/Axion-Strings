@@ -30,7 +30,7 @@ static void shift3D(fftw_complex *arr, int N) {
     }
 }
 
-void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) {
+void gaussian_thermal(data_t *phi1, data_t *phi2, data_t *phidot1, data_t *phidot2) {
 
     int length = get_length(), N = parameters.N;
     float L = parameters.space_step * N;
@@ -40,10 +40,10 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
     vslNewStream(&stream, VSL_BRNG_SFMT19937, parameters.seed);
 
     // Use input solution vectors to store random numbers for now:
-    dtype *rng_array_1 = phi1;
-    dtype *rng_array_2 = phi2;
-    dtype *rng_array_3 = phidot1;
-    dtype *rng_array_4 = phidot2;
+    data_t *rng_array_1 = phi1;
+    data_t *rng_array_2 = phi2;
+    data_t *rng_array_3 = phidot1;
+    data_t *rng_array_4 = phidot2;
 
     // Fill arrays with random numbers:
     mkl_v_rng_gaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, length, rng_array_1, 0.0f, 1.0f);
@@ -58,8 +58,8 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
 
     if (parameters.NDIMS == 2) {
 
-        dtype *kx = (dtype *) calloc(N, sizeof(dtype));
-        dtype *ky = (dtype *) calloc(N, sizeof(dtype));
+        data_t *kx = (data_t *) calloc(N, sizeof(data_t));
+        data_t *ky = (data_t *) calloc(N, sizeof(data_t));
 
         assert(kx != NULL && ky != NULL);
 
@@ -82,11 +82,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         for (int m = 0; m < length; m++) {
             int i, j;
             coordinate2(&i, &j, m, N);
-            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j]);
-            dtype amplitude, amplitude_dot;
+            data_t k = sqrt(kx[i]*kx[i] + ky[j]*ky[j]);
+            data_t amplitude, amplitude_dot;
             if (k != 0.0f) {
-                dtype omegak = sqrt(pow_2(k) + m_eff_squared);
-                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                data_t omegak = sqrt(pow_2(k) + m_eff_squared);
+                data_t bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
                 amplitude = sqrt(bose / omegak); // Power spectrum for phi
                 amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
             } else {
@@ -127,9 +127,9 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
 
     if (parameters.NDIMS == 3) {
 
-        dtype *kx = (dtype *) calloc(N, sizeof(dtype));
-        dtype *ky = (dtype *) calloc(N, sizeof(dtype));
-        dtype *kz = (dtype *) calloc(N, sizeof(dtype));
+        data_t *kx = (data_t *) calloc(N, sizeof(data_t));
+        data_t *ky = (data_t *) calloc(N, sizeof(data_t));
+        data_t *kz = (data_t *) calloc(N, sizeof(data_t));
 
         assert(kx != NULL && ky != NULL && kz != NULL);
 
@@ -152,11 +152,11 @@ void gaussian_thermal(dtype *phi1, dtype *phi2, dtype *phidot1, dtype *phidot2) 
         for (int m = 0; m < length; m++) {
             int i, j, l;
             coordinate3(&i, &j, &l, m, N);
-            dtype k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l]);
-            dtype amplitude, amplitude_dot;
+            data_t k = sqrt(kx[i]*kx[i] + ky[j]*ky[j] + kz[l]*kz[l]);
+            data_t amplitude, amplitude_dot;
             if (k != 0.0f) {
-                dtype omegak = sqrt(pow_2(k) + m_eff_squared);
-                dtype bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
+                data_t omegak = sqrt(pow_2(k) + m_eff_squared);
+                data_t bose = 1.0f / (exp(omegak / T_initial) - 1.0f);
                 amplitude = sqrt(bose / omegak); // Power spectrum for phi
                 amplitude_dot = sqrt(bose * omegak); // Power spectrum for phidot
             } else {

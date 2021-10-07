@@ -39,14 +39,14 @@ void run_standard() {
     set_physics_variables();
 
     // Allocate fields on the heap:
-    data.phi1      = (dtype *) calloc(length, sizeof(dtype));
-    data.phi2      = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot1   = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot2   = (dtype *) calloc(length, sizeof(dtype));
-    data.ker1_curr = (dtype *) calloc(length, sizeof(dtype));
-    data.ker2_curr = (dtype *) calloc(length, sizeof(dtype));
-    data.ker1_next = (dtype *) calloc(length, sizeof(dtype));
-    data.ker2_next = (dtype *) calloc(length, sizeof(dtype));
+    data.phi1      = (data_t *) calloc(length, sizeof(data_t));
+    data.phi2      = (data_t *) calloc(length, sizeof(data_t));
+    data.phidot1   = (data_t *) calloc(length, sizeof(data_t));
+    data.phidot2   = (data_t *) calloc(length, sizeof(data_t));
+    data.ker1_curr = (data_t *) calloc(length, sizeof(data_t));
+    data.ker2_curr = (data_t *) calloc(length, sizeof(data_t));
+    data.ker1_next = (data_t *) calloc(length, sizeof(data_t));
+    data.ker2_next = (data_t *) calloc(length, sizeof(data_t));
     data.axion = NULL;
     data.saxion = NULL;
 
@@ -55,7 +55,7 @@ void run_standard() {
     assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
 
     if ((parameters.save_snapshots && parameters.save_strings) || (parameters.sample_time_series && parameters.sample_strings)) {
-        data.axion = (dtype *) calloc(length, sizeof(dtype));
+        data.axion = (data_t *) calloc(length, sizeof(data_t));
         assert(data.axion != NULL);
     }
 
@@ -132,7 +132,7 @@ void run_standard() {
             }
 
             if (parameters.sample_background) {
-                dtype phi1_bar, phi2_bar, phidot1_bar, phidot2_bar, axion_bar, saxion_bar;
+                data_t phi1_bar, phi2_bar, phidot1_bar, phidot2_bar, axion_bar, saxion_bar;
                 phi1_bar = phi2_bar = phidot1_bar = phidot2_bar = axion_bar = saxion_bar = 0.0f;
 
                 #pragma omp parallel for schedule(static) reduction(+:phi1_bar,phi2_bar,phidot1_bar,phidot2_bar,axion_bar,saxion_bar)

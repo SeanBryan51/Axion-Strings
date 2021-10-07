@@ -4,7 +4,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     // stencil coefficients: https://en.wikipedia.org/wiki/Finite_difference_coefficient
     int stencil_setting = parameters.stencil_setting;
-    std::vector<std::vector<dtype>> coefficients = {
+    std::vector<std::vector<data_t>> coefficients = {
         {        -2.0f * NDIMS,      1.0f },                                       // stencil_setting = 0
         {   -5.0f/2.0f * NDIMS, 4.0f/3.0f, -1.0f/12.0f },                          // stencil_setting = 1
         { -49.0f/18.0f * NDIMS, 3.0f/2.0f, -3.0f/20.0f,  1.0f/90.0f },             // stencil_setting = 2
@@ -18,7 +18,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
     MKL_INT nnz;
     MKL_INT *rows;
     MKL_INT *cols;
-    dtype *values;
+    data_t *values;
 
     if (NDIMS == 2) {
 
@@ -27,7 +27,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         nnz = 0;
         rows = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
         cols = (int *) calloc(num_bands * length, sizeof(MKL_INT));
-        values = (dtype *) calloc(num_bands * length, sizeof(dtype));
+        values = (data_t *) calloc(num_bands * length, sizeof(data_t));
 
         assert(rows != NULL && cols != NULL && values != NULL);
 
@@ -82,7 +82,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         nnz = 0;
         rows = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
         cols = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
-        values = (dtype *) calloc(num_bands * length, sizeof(dtype));
+        values = (data_t *) calloc(num_bands * length, sizeof(data_t));
 
         assert(rows != NULL && cols != NULL && values != NULL);
 
@@ -150,9 +150,9 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
  * Stencil coefficients:
  * https://en.wikipedia.org/wiki/Finite_difference_coefficient
  */
-dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
+data_t laplacian2D(data_t *phi, int i, int j, float dx, int N) {
 
-    dtype laplacian;
+    data_t laplacian;
 
     laplacian = (
         (phi[offset2(i+1,j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i-1,j,N)])
@@ -162,9 +162,9 @@ dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
     return laplacian;
 }
 
-dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
+data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N) {
 
-    dtype laplacian;
+    data_t laplacian;
 
     laplacian = (
         (phi[offset3(i+1,j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)])

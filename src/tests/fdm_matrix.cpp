@@ -4,7 +4,7 @@
 
 #include "standard/common.h"
 
-int is_equal(dtype x, dtype y, dtype tolerance) {
+int is_equal(data_t x, data_t y, data_t tolerance) {
     assert(tolerance > 0.0f);
     return x - y <= tolerance && x - y >= -tolerance;
 }
@@ -43,7 +43,7 @@ void test_build_coefficient_matrix() {
     int N = 4;
     sparse_matrix_t mat_coo, mat_csr;
     sparse_status_t status;
-    dtype correct_matrix[] = {
+    data_t correct_matrix[] = {
         -4, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
         1, -4, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
         0, 1, -4, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
@@ -108,15 +108,15 @@ void test_build_coefficient_matrix() {
 void test_fdm_matrix2D() {
 
     int N;
-    dtype *phi;
-    dtype *laplacian;
+    data_t *phi;
+    data_t *laplacian;
     sparse_matrix_t mat;
     sparse_status_t status;
 
     // success case: simple array of zeros
     N = 128;
-    phi = (dtype *) calloc(N * N, sizeof(dtype));
-    laplacian = (dtype *) calloc(N * N, sizeof(dtype));
+    phi = (data_t *) calloc(N * N, sizeof(data_t));
+    laplacian = (data_t *) calloc(N * N, sizeof(data_t));
     assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 2, N);
 
@@ -137,12 +137,12 @@ void test_fdm_matrix2D() {
 
     // success case: wave with periodic boundary conditions
     N = 256;
-    phi = (dtype *) calloc(N * N, sizeof(dtype));
-    laplacian = (dtype *) calloc(N * N, sizeof(dtype));
+    phi = (data_t *) calloc(N * N, sizeof(data_t));
+    laplacian = (data_t *) calloc(N * N, sizeof(data_t));
     assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 2, N);
 
-    dtype L = N / 2.0f;
+    data_t L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // define field values
@@ -157,8 +157,8 @@ void test_fdm_matrix2D() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // compare discretised laplacian and actual laplacian
-            dtype discretised_laplacian = laplacian[offset2(i,j,N)];
-            dtype actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
+            data_t discretised_laplacian = laplacian[offset2(i,j,N)];
+            data_t actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
             assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
         }
     }
@@ -174,15 +174,15 @@ void test_fdm_matrix2D() {
 void test_fdm_matrix3D() {
 
     int N;
-    dtype *phi;
-    dtype *laplacian;
+    data_t *phi;
+    data_t *laplacian;
     sparse_matrix_t mat;
     sparse_status_t status;
 
     // success case: simple array of zeros
     N = 128;
-    phi = (dtype *) calloc(N * N * N, sizeof(dtype));
-    laplacian = (dtype *) calloc(N * N * N, sizeof(dtype));
+    phi = (data_t *) calloc(N * N * N, sizeof(data_t));
+    laplacian = (data_t *) calloc(N * N * N, sizeof(data_t));
     assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 3, N);
 
@@ -203,12 +203,12 @@ void test_fdm_matrix3D() {
 
     // success case: wave with periodic boundary conditions
     N = 256;
-    phi = (dtype *) calloc(N * N * N, sizeof(dtype));
-    laplacian = (dtype *) calloc(N * N * N, sizeof(dtype));
+    phi = (data_t *) calloc(N * N * N, sizeof(data_t));
+    laplacian = (data_t *) calloc(N * N * N, sizeof(data_t));
     assert(phi != NULL && laplacian != NULL);
     build_coefficient_matrix(&mat, 3, N);
 
-    dtype L = N / 2.0f;
+    data_t L = N / 2.0f;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -226,8 +226,8 @@ void test_fdm_matrix3D() {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
                 // compare discretised laplacian and actual laplacian
-                dtype discretised_laplacian = laplacian[offset3(i,j,k,N)];
-                dtype actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
+                data_t discretised_laplacian = laplacian[offset3(i,j,k,N)];
+                data_t actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j) + sinf(M_PI / L * k));
                 assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
             }
         }
