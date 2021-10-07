@@ -93,7 +93,7 @@ inline void coordinate3(int *i, int *j, int *k, int offset, int N) {
 }
 
 // physics.cpp
-extern float tau;                   // Dimensionless program time variable (in conformal time).
+extern dtype tau;                   // Dimensionless program time variable (in conformal time).
 extern float T_initial;             // Initial temperature in units of f_a. Defined when H ~ f_a
 extern float reduced_planck_mass;   // Reduced Planck mass in GeV normalised by the axion decay constant f_a: M_planck = 1 / sqrt(8*pi*G) / f_a
 extern float m_saxion_initial;      // Initial value of saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a

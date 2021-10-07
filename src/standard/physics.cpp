@@ -1,6 +1,6 @@
 #include "common.h"
 
-float tau;
+dtype tau;
 float T_initial;
 float reduced_planck_mass;
 float m_saxion_initial;
