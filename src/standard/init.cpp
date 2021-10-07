@@ -1,7 +1,3 @@
-/*
- * Description: Module that sets the initial conditions for the string simulation
- */
-
 #include <fftw3.h>
 
 #include "common.h"

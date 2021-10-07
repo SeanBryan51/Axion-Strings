@@ -194,7 +194,7 @@ void run_standard() {
             n_snapshots_written++;
         }
 
-        debug(data, length, tstep);
+        // debug(data, length, tstep);
 
         vvsl_field_rescaled(data);
         // vvsl_hamiltonian_form(data);
@@ -212,6 +212,7 @@ void run_standard() {
     free(data.ker2_next);
     free(data.axion);
     free(data.saxion);
+    mkl_sparse_destroy(data.coefficient_matrix);
 
     close_output_filestreams();
 }
