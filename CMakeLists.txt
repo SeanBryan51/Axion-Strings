@@ -19,9 +19,16 @@ enable_testing()
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
 # settings determined at compile time:
-add_compile_definitions(
-    USE_DOUBLE_PRECISION
-    # AMR_ENABLED
-)
+# note: remember to delete the cmake cache and reconfigure if changing options!
+
+option(AMR_ENABLED "Enable adaptive mesh refinenent." ON)
+if (AMR_ENABLED)
+    add_compile_definitions(AMR_ENABLED)
+endif()
+
+option(USE_DOUBLE_PRECISION "Enable double precision floating point arithmetic." ON)
+if (USE_DOUBLE_PRECISION)
+    add_compile_definitions(USE_DOUBLE_PRECISION)
+endif()
 
 add_subdirectory(src)
