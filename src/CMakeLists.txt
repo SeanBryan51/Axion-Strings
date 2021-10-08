@@ -34,38 +34,32 @@ target_link_libraries(common OpenMP::OpenMP_CXX)
 target_link_libraries(common ${BLAS_LIBRARIES})
 target_link_libraries(main common)
 
-if(AMR_ENABLED)
+add_library(
+    amr
+    amr/amr_interface.hpp
+    amr/amr_internal.hpp
+    amr/amr_run.cpp
+)
 
-    add_library(
-        amr
-        amr/amr_interface.hpp
-        amr/amr_internal.hpp
-        amr/amr_run.cpp
-    )
+target_include_directories(amr PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(amr OpenMP::OpenMP_CXX)
+target_link_libraries(amr ${BLAS_LIBRARIES})
+target_link_libraries(amr common)
+target_link_libraries(main amr)
 
-    target_include_directories(amr PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(amr OpenMP::OpenMP_CXX)
-    target_link_libraries(amr ${BLAS_LIBRARIES})
-    target_link_libraries(amr common)
-    target_link_libraries(main amr)
+add_library(
+    standard
+    standard/s_interface.hpp
+    standard/s_internal.hpp
+    standard/s_run.cpp
+    standard/s_integrate.cpp
+)
 
-else()
-
-    add_library(
-        standard
-        standard/s_interface.hpp
-        standard/s_internal.hpp
-        standard/s_run.cpp
-        standard/s_integrate.cpp
-    )
-
-    target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(standard OpenMP::OpenMP_CXX)
-    target_link_libraries(standard ${BLAS_LIBRARIES})
-    target_link_libraries(standard common)
-    target_link_libraries(main standard)
-
-endif()
+target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(standard OpenMP::OpenMP_CXX)
+target_link_libraries(standard ${BLAS_LIBRARIES})
+target_link_libraries(standard common)
+target_link_libraries(main standard)
 
 # configure tests:
 
