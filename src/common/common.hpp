@@ -160,6 +160,8 @@ int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dat
 
 // utils/fileio.cpp
 extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
+void read_field_data(const char *filepath, data_t *data, int length);
+void save_data(char *file_name, data_t *data, int length);
 void save_strings2(char *file_name, std::vector <vec2i> *v);
 void save_strings3(char *file_name, std::vector <vec3i> *v);
 void open_output_filestreams();

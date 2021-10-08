@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common.hpp"
+#include "common/common.hpp"
 
 // Mega struct containing all the pointers to large arrays/solution vectors:
 struct _all_data {
@@ -26,7 +26,3 @@ data_t laplacian2D(data_t *phi, int i, int j, float dx, int N);
 data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N);
 void  vvsl_field_rescaled(all_data data);
 void  vvsl_hamiltonian_form(all_data data);
-
-// s_util.cpp
-void read_field_data(const char *filepath, data_t *data, int length);
-void save_data(char *file_name, data_t *data, int length);

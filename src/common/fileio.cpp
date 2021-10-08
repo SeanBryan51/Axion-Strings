@@ -1,6 +1,32 @@
-#include "../common.hpp"
+#include "common.hpp"
 
 FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
+
+void read_field_data(const char *filepath, data_t *data, int length) {
+
+    FILE *fp = fopen(filepath, "r");
+    assert(fp != NULL);
+
+    fread(data, sizeof(data_t), length, fp);
+
+    fclose(fp);
+}
+
+void save_data(char *file_name, data_t *data, int length) {
+
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
+    assert(path != NULL);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+
+    fprintf(fp_main_output, "  Saving data... at %s\n", path);
+
+    FILE *fp = fopen(path, "w");
+    assert(fp != NULL);
+
+    fwrite(data, sizeof(data_t), length, fp);
+
+    fclose(fp);
+}
 
 void save_strings2(char *file_name, std::vector <vec2i> *v) {
 

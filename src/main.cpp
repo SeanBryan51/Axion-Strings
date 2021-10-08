@@ -1,6 +1,4 @@
-#include "common.hpp"
-
-struct _parameters parameters;
+#include "common/common.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -16,7 +14,11 @@ int main(int argc, char *argv[]) {
 
     double start = omp_get_wtime();
 
-    run();
+#ifdef AMR_ENABLED
+    run_amr();
+#else
+    run_standard();
+#endif
 
     printf("Time taken: %f seconds\n", omp_get_wtime() - start);
 

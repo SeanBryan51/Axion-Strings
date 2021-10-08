@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "standard/common.h"
+#include "standard/s_internal.hpp"
+#include "common/common.hpp"
 
 int is_equal(data_t x, data_t y, data_t tolerance) {
     assert(tolerance > 0.0f);
