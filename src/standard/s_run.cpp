@@ -28,8 +28,6 @@ void run_standard() {
     all_data data;
     int length = get_length();
 
-    open_output_filestreams();
-
     // Sanity check on input parameters:
     assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
     assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
@@ -213,6 +211,4 @@ void run_standard() {
     free(data.axion);
     free(data.saxion);
     mkl_sparse_destroy(data.coefficient_matrix);
-
-    close_output_filestreams();
 }

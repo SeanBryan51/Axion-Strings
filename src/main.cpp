@@ -2,15 +2,17 @@
 
 int main(int argc, char *argv[]) {
 
+    open_output_filestreams();
+
     if(argc != 2) {
-        printf("Error: usage ./main <ParameterFile>\n");
+        fprintf(fp_main_output, "Error: usage ./main <ParameterFile>\n");
         return EXIT_FAILURE;
     }
 
-    // Initialise global variables defined in parameters.h:
+    // read in parameters defined in common.hpp:
     read_parameter_file(argv[1]);
 
-    printf("Running with %s\n", argv[1]);
+    fprintf(fp_main_output, "Running with %s\n", argv[1]);
 
     double start = omp_get_wtime();
 
@@ -20,7 +22,9 @@ int main(int argc, char *argv[]) {
     run_standard();
 #endif
 
-    printf("Time taken: %f seconds\n", omp_get_wtime() - start);
+    fprintf(fp_main_output, "Time taken: %f seconds\n", omp_get_wtime() - start);
+
+    close_output_filestreams();
 
     return EXIT_SUCCESS;
 }
