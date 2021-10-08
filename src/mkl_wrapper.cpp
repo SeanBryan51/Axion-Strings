@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common.hpp"
 
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A, const sparse_index_base_t indexing, const MKL_INT rows, const MKL_INT cols, const MKL_INT nnz, MKL_INT *row_indx, MKL_INT * col_indx, data_t *values) {
 #ifdef USE_DOUBLE_PRECISION
