@@ -1,6 +1,6 @@
-#include <fftw3.h>
+#include "common.hpp"
 
-#include "common.h"
+#include <fftw3.h>
 
 /*
  * See question 3.11. from http://www.fftw.org/faq/

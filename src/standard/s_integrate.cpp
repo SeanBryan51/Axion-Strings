@@ -1,4 +1,4 @@
-#include "common.h"
+#include "s_internal.hpp"
 
 void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 

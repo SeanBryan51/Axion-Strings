@@ -21,6 +21,7 @@ list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 # settings determined at compile time:
 add_compile_definitions(
     USE_DOUBLE_PRECISION
+    # AMR_ENABLED
 )
 
 add_subdirectory(src)

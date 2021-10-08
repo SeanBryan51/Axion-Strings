@@ -1,5 +1,5 @@
-#include "common.h"
-#include "interface.h"
+#include "s_internal.hpp"
+#include "s_interface.hpp"
 
 static void debug(all_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {

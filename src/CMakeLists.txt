@@ -1,7 +1,15 @@
 add_executable(
     main
     main.cpp
-    parameters.h
+    common.hpp
+
+    physics.cpp
+    init.cpp
+    string_finding.cpp
+    mkl_wrapper.cpp
+
+    utils/fileio.cpp
+    utils/read_parameters.cpp
 )
 
 # link third party libraries:
@@ -21,15 +29,11 @@ target_link_libraries(main OpenMP::OpenMP_CXX)
 
 add_library(
     standard
-    standard/common.h
-    standard/interface.h
-    standard/run.cpp
-    standard/init.cpp
-    standard/integrate.cpp
-    standard/string_finding.cpp
-    standard/physics.cpp
-    standard/mkl_wrapper.cpp
-    standard/fileio.cpp
+    standard/s_interface.hpp
+    standard/s_internal.hpp
+    standard/s_run.cpp
+    standard/s_integrate.cpp
+    standard/s_util.cpp
 )
 
 target_include_directories(standard PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -37,22 +41,13 @@ target_link_libraries(standard OpenMP::OpenMP_CXX)
 target_link_libraries(standard ${BLAS_LIBRARIES})
 target_link_libraries(main standard)
 
-add_library(
-    utils
-    utils/utils.h
-    utils/read_parameters.cpp
-)
-
-target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(utils ${BLAS_LIBRARIES})
-target_link_libraries(main utils)
 
 # configure tests:
 
-add_executable(laplacian tests/laplacian.cpp)
-target_link_libraries(laplacian standard utils)
-add_test(test-laplacian laplacian)
+# add_executable(laplacian tests/laplacian.cpp)
+# target_link_libraries(laplacian standard utils)
+# add_test(test-laplacian laplacian)
 
-add_executable(fdm_matrix tests/fdm_matrix.cpp)
-target_link_libraries(fdm_matrix standard utils)
-add_test(test-fdm_matrix fdm_matrix)
+# add_executable(fdm_matrix tests/fdm_matrix.cpp)
+# target_link_libraries(fdm_matrix standard utils)
+# add_test(test-fdm_matrix fdm_matrix)

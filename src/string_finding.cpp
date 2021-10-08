@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common.hpp"
 
 int cores2(data_t *field, std::vector <vec2i> &list) {
 

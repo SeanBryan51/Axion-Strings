@@ -1,9 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <omp.h>
+#include "common.hpp"
 
-#include "standard/interface.h"
-#include "utils/utils.h"
+struct _parameters parameters;
 
 int main(int argc, char *argv[]) {
 
@@ -19,7 +16,7 @@ int main(int argc, char *argv[]) {
 
     double start = omp_get_wtime();
 
-    run_standard();
+    run();
 
     printf("Time taken: %f seconds\n", omp_get_wtime() - start);
 

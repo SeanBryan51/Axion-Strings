@@ -13,7 +13,11 @@
 #include "mkl_vsl.h"
 #include "mkl_spblas.h"
 
-#include "../parameters.h"
+#ifdef AMR_ENABLED
+#include "amr/amr_interface.hpp"
+#else
+#include "standard/s_interface.hpp"
+#endif
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double data_t;
@@ -21,26 +25,45 @@ typedef double data_t;
 typedef float data_t;
 #endif
 
+#define MAX_LEN 200
+
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
 
-// Mega struct containing all the pointers to large arrays/solution vectors:
-typedef struct _all_data {
-    data_t *phi1; // phi_1 field values
-    data_t *phi2; // phi_2 field values
-    data_t *phidot1; // phi_1 time derivative
-    data_t *phidot2; // phi_2 time derivative
-    data_t *ker1_curr; // current kernel for phi_1 equation of motion
-    data_t *ker2_curr; // current kernel for phi_2 equation of motion
-    data_t *ker1_next; // next kernel for phi_1 equation of motion
-    data_t *ker2_next; // next kernel for phi_2 equation of motion
+extern struct _parameters {
 
-    data_t *axion; // axion field values
-    data_t *saxion; // saxion field values
+    // User defined parameters to be read from 
+    // parameter file:
 
-    sparse_matrix_t coefficient_matrix;
+    float lambdaPRS;
+    int   NDIMS;
+    int   N;
+    float space_step;
+    float time_step;
+    int   stencil_setting;
+    unsigned int seed;
 
-} all_data;
+    int  write_output_file;
+    char output_file_path[MAX_LEN];
+
+    int  save_snapshots;
+    int  n_snapshots;
+    char output_directory[MAX_LEN];
+    int  save_fields;
+    int  save_strings;
+
+    int  sample_time_series;
+    int  n_samples;
+    char ts_output_path[MAX_LEN];
+
+    int sample_strings;
+    int sample_background;
+
+    int thr;
+
+} parameters;
+
+typedef struct _all_data all_data;
 
 typedef struct vec2i { int x; int y; } vec2i;
 typedef struct vec3i { int x; int y; int z; } vec3i;
@@ -111,13 +134,6 @@ float meff_squared();
 // init.cpp
 void gaussian_thermal(data_t *phi1, data_t *phi2, data_t *phidot1, data_t *phidot2);
 
-// integrate.cpp
-void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
-data_t laplacian2D(data_t *phi, int i, int j, float dx, int N);
-data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N);
-void  vvsl_field_rescaled(all_data data);
-void  vvsl_hamiltonian_form(all_data data);
-
 // string_finding.cpp
 int cores2(data_t *axion, std::vector <vec2i> &s);
 int cores3(data_t *axion, std::vector <vec3i> &s);
@@ -142,11 +158,12 @@ void mkl_axpy (const MKL_INT n, const data_t a, const data_t *x, const MKL_INT i
 void mkl_copy (const MKL_INT n, const data_t *x, const MKL_INT incx, data_t *y, const MKL_INT incy);
 int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, data_t *r, data_t a, data_t sigma);
 
-// fileio.cpp
+// utils/fileio.cpp
 extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
-void read_field_data(const char *filepath, data_t *data, int length);
-void save_data(char *file_name, data_t *data, int length);
 void save_strings2(char *file_name, std::vector <vec2i> *v);
 void save_strings3(char *file_name, std::vector <vec3i> *v);
 void open_output_filestreams();
 void close_output_filestreams();
+
+// utils/read_parameters.cpp
+void read_parameter_file(char *fname);

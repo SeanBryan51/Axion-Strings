@@ -3,13 +3,10 @@
 #include <string.h>
 #include <assert.h>
 
-#include "utils.h"
-#include "../parameters.h"
+#include "../common.hpp"
 
 #define MAX_TAGS 300
 #define MAX_LINE_WIDTH 200
-
-struct _parameters parameters;
 
 typedef enum Type {
     DOUBLE,
