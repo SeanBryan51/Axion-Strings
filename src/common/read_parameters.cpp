@@ -8,7 +8,7 @@
 #define MAX_TAGS 300
 #define MAX_LINE_WIDTH 200
 
-struct _parameters parameters;
+struct parameters parameters;
 
 typedef enum Type {
     DOUBLE,

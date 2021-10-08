@@ -3,7 +3,7 @@
 #include "common/common.hpp"
 
 // Mega struct containing all the pointers to large arrays/solution vectors:
-struct _all_data {
+typedef struct _all_data {
     data_t *phi1; // phi_1 field values
     data_t *phi2; // phi_2 field values
     data_t *phidot1; // phi_1 time derivative
@@ -18,7 +18,7 @@ struct _all_data {
 
     sparse_matrix_t coefficient_matrix;
 
-};
+} all_data;
 
 // s_integrate.cpp
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);

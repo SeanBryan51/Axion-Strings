@@ -30,7 +30,7 @@ typedef float data_t;
 // Macro for periodic boundary conditions:
 #define periodic(i,N) (((i) >= 0) ? (i) % (N) : (N) - (-(i) % (N)))
 
-extern struct _parameters {
+extern struct parameters {
 
     // User defined parameters to be read from 
     // parameter file:
@@ -62,8 +62,6 @@ extern struct _parameters {
     int thr;
 
 } parameters;
-
-typedef struct _all_data all_data;
 
 typedef struct vec2i { int x; int y; } vec2i;
 typedef struct vec3i { int x; int y; int z; } vec3i;
