@@ -6,10 +6,11 @@
  * Solution vectors contain data for all blocks/patches defined on the level.
  * The location of the solution vector for each patch in the array is specified by
  * the b_index array.
+ * 
+ * Note: assume grids are square for simplicity
  */
 typedef struct level_data {
-    // assume grids are square for simplicity
-    int size;      // size of current solution vector
+    int size; // size of current solution vector
 
     data_t *phi1;       // phi_1 field values
     data_t *phi2;       // phi_2 field values
@@ -29,3 +30,21 @@ typedef struct level_data {
     // sparse_matrix_t coefficient_matrix;
 
 } level_data;
+
+/*
+ * Note: remember to divide by the square of the lattice spacing.
+ */
+inline data_t laplacian2(data_t *field, int i, int j, int N) {
+    return field[offset2(i+1,j,N)] + field[offset2(i,j+1,N)] - 4.0f*field[offset2(i,j,N)] + field[offset2(i-1,j,N)] + field[offset2(i,j-1,N)];
+}
+
+/*
+ * Note: remember to divide by the square of the lattice spacing.
+ */
+inline data_t laplacian3(data_t *field, int i, int j, int k, int N) {
+    return field[offset3(i+1,j,k,N)] + field[offset3(i,j+1,k,N)] + field[offset3(i,j,k+1,N)] - 6.0f*field[offset3(i,j,k,N)] + field[offset3(i-1,j,k,N)] + field[offset3(i,j-1,k,N)] + field[offset3(i,j,k-1,N)];
+}
+
+
+// amr_integrate.cpp
+void integrate_level(std::vector<level_data> hierarchy, int level);

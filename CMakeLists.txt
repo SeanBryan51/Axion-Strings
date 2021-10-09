@@ -21,7 +21,7 @@ list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 # settings determined at compile time:
 # note: remember to delete the cmake cache and reconfigure if changing options!
 
-option(AMR_ENABLED "Enable adaptive mesh refinenent." ON)
+option(AMR_ENABLED "Enable adaptive mesh refinenent." OFF)
 if (AMR_ENABLED)
     add_compile_definitions(AMR_ENABLED)
 endif()

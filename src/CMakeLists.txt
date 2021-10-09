@@ -39,6 +39,7 @@ add_library(
     amr/amr_interface.hpp
     amr/amr_internal.hpp
     amr/amr_run.cpp
+    amr/amr_integrate.cpp
 )
 
 target_include_directories(amr PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
