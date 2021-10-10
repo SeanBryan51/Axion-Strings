@@ -29,7 +29,8 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
     std::vector<int> block_size;
 
     // Populate arguments block_coords and block_size with optimal boxes for refinement:
-    gen_refinement_blocks(block_coords, block_size, hierarchy[level]);
+    // TODO: imediate segfault, case when entire grid is flagged?
+    // gen_refinement_blocks(block_coords, block_size, hierarchy, level);
 
     // This is going to be one hell of a function!
     regrid(hierarchy, block_coords, block_size, level);

@@ -58,13 +58,31 @@ void run_amr() {
         debug(root_level, root_level.size, tstep);
     }
 
+#if 0
+    std::vector<vec2i> block_coords;
+    std::vector<int> block_size;
+
+    gen_refinement_blocks(block_coords, block_size, hierarchy, 0);
+
+    assert(block_coords.size() == block_size.size());
+    for (int i = 0; i < block_coords.size(); i++) {
+        printf("(%d, %d),\n", block_coords[i].x, block_coords[i].y);
+        printf("(%d, %d),\n", block_coords[i].x + block_size[i] - 1, block_coords[i].y + block_size[i] - 1);
+        // printf("size = %d\n", block_size[i]);
+    }
+#endif
+
+#if 0
     FILE *fp = fopen("/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/snapshot-flagged", "w");
     assert(fp != NULL);
     fwrite(root_level.flagged, sizeof(int), root_level.size, fp);
     fclose(fp);
+#endif
 
+#if 0
     save_data("snapshot-test-phi1", root_level.phi1, root_level.size);
     save_data("snapshot-test-phi2", root_level.phi2, root_level.size);
+#endif
 
     // Clean up memory:
     for (level_data level : hierarchy) {

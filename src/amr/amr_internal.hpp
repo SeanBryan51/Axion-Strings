@@ -71,7 +71,15 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
 void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_local);
 
 // amr_point_clustering.cpp
-void gen_refinement_blocks(std::vector<vec2i> block_coords, std::vector<int> block_size, level_data data);
+
+// TODO: remove
+typedef struct cluster_t {
+    vec2i centroid;
+    std::vector<vec2i> points;
+} cluster_t;
+
+void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int b_size); // TODO: remove
+void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &block_size, std::vector<level_data> hierarchy, int level);
 
 // amr_hierarchy.cpp
 void regrid(std::vector<level_data> hierarchy, std::vector<vec2i> block_coords, std::vector<int> block_size, int level);
