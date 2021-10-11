@@ -10,6 +10,7 @@
  * Note: assume grids are square for simplicity
  */
 typedef struct level_data {
+    // TODO: need better names than size and length
     int size; // size of current solution vector
 
     data_t *phi1;       // phi_1 field values

@@ -2,7 +2,7 @@
 
 FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 
-void read_field_data(const char *filepath, data_t *data, int length) {
+void fio_read_field_data(const char *filepath, data_t *data, int length) {
 
     FILE *fp = fopen(filepath, "r");
     assert(fp != NULL);
@@ -12,7 +12,7 @@ void read_field_data(const char *filepath, data_t *data, int length) {
     fclose(fp);
 }
 
-void save_data(char *file_name, data_t *data, int length) {
+void fio_save_field_data(char *file_name, data_t *data, int length) {
 
     char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
     assert(path != NULL);
@@ -28,7 +28,23 @@ void save_data(char *file_name, data_t *data, int length) {
     fclose(fp);
 }
 
-void save_strings2(char *file_name, std::vector <vec2i> *v) {
+void fio_save_flagged_data(char *file_name, int *data, int length) {
+
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
+    assert(path != NULL);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+
+    fprintf(fp_main_output, "  Saving data... at %s\n", path);
+
+    FILE *fp = fopen(path, "w");
+    assert(fp != NULL);
+
+    fwrite(data, sizeof(int), length, fp);
+
+    fclose(fp);
+}
+
+void fio_save_strings2(char *file_name, std::vector <vec2i> *v) {
 
     char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
     assert(path != NULL);
@@ -44,7 +60,7 @@ void save_strings2(char *file_name, std::vector <vec2i> *v) {
     fclose(fp);
 }
 
-void save_strings3(char *file_name, std::vector <vec3i> *v) {
+void fio_save_strings3(char *file_name, std::vector <vec3i> *v) {
 
     char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
     assert(path != NULL);
@@ -60,7 +76,7 @@ void save_strings3(char *file_name, std::vector <vec3i> *v) {
     fclose(fp);
 }
 
-void open_output_filestreams() {
+void fio_open_output_filestreams() {
 
     // set main output file stream:
     if (parameters.write_output_file) {
@@ -85,7 +101,7 @@ void open_output_filestreams() {
     }
 }
 
-void close_output_filestreams() {
+void fio_close_output_filestreams() {
     if (parameters.write_output_file) fclose(fp_main_output);
     if (parameters.save_snapshots) fclose(fp_snapshot_timings);
     if (parameters.sample_time_series) fclose(fp_time_series);

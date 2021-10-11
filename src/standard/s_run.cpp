@@ -166,8 +166,8 @@ void run_standard() {
                 sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
                 sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
 
-                save_data(fname_phi1, data.phi1, length);
-                save_data(fname_phi2, data.phi2, length);
+                fio_save_field_data(fname_phi1, data.phi1, length);
+                fio_save_field_data(fname_phi2, data.phi2, length);
             }
 
             if (parameters.save_strings) {
@@ -181,11 +181,11 @@ void run_standard() {
                 if (parameters.NDIMS == 2) {
                     std::vector <vec2i> s;
                     cores2(data.axion, s);
-                    save_strings2(fname_strings, &s);
+                    fio_save_strings2(fname_strings, &s);
                 } else {
                     std::vector <vec3i> s;
                     cores3(data.axion, s);
-                    save_strings3(fname_strings, &s);
+                    fio_save_strings3(fname_strings, &s);
                 }
             }
 

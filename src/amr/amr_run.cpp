@@ -11,6 +11,12 @@ static void debug(level_data data, int length, int tstep) {
     }
 }
 
+static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
+    if (!parameters.save_snapshots) return 0;
+    // TODO: temporary solution
+    return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
+}
+
 void run_amr() {
 
     std::vector<level_data> hierarchy;
@@ -48,8 +54,46 @@ void run_amr() {
 
     hierarchy = {root_level};
 
+    if (parameters.save_snapshots) {
+        fprintf(fp_snapshot_timings, "snapshot,");
+        fprintf(fp_snapshot_timings, "tau,");
+        fprintf(fp_snapshot_timings, "hubble_scale,");
+        fprintf(fp_snapshot_timings, "string_tension,");
+        fprintf(fp_snapshot_timings, "\n");
+    }
+
+    int n_snapshots_written = 0;
+
     int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
     for (int tstep = 0; tstep < final_step; tstep++) {
+
+        if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
+            fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
+
+            // output snapshot timings:
+            fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
+            fprintf(fp_snapshot_timings, "%f,", tau);
+            fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "\n");
+
+            if (parameters.save_fields) {
+
+                char fname_phi1[50], fname_phi2[50];
+                sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
+                sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
+
+                fio_save_field_data(fname_phi1, root_level.phi1, root_level.size);
+                fio_save_field_data(fname_phi2, root_level.phi2, root_level.size);
+            }
+#if 0
+            // output flagged points:
+            char fname_flagged[50];
+            sprintf(fname_flagged, "snapshot%d-flagged", n_snapshots_written);
+            fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.size);
+#endif
+            n_snapshots_written++;
+        }
 
         evolve_level(hierarchy, 0, tau);
 
@@ -80,8 +124,8 @@ void run_amr() {
 #endif
 
 #if 0
-    save_data("snapshot-test-phi1", root_level.phi1, root_level.size);
-    save_data("snapshot-test-phi2", root_level.phi2, root_level.size);
+    fio_save_field_data("snapshot-test-phi1", root_level.phi1, root_level.size);
+    fio_save_field_data("snapshot-test-phi2", root_level.phi2, root_level.size);
 #endif
 
     // Clean up memory:

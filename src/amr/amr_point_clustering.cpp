@@ -84,10 +84,13 @@ void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, i
         double v_north = flagged_preprocessed[offset2(i,j+1,b_size)];
         double v_south = flagged_preprocessed[offset2(i,j-1,b_size)];
 
-        double threshold = 0.05f;
+        double threshold = 0.001f;
         if (v > threshold && v > v_east && v > v_west && v > v_north && v > v_south)
             clusters.push_back((cluster_t) { .centroid = {i, j}, .points = {}});
     }
+
+
+    // TODO: need to resolve case when two peaks are close to each other?
 
 #if 0
     // debugging
@@ -135,6 +138,12 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
             }
         }
 
+        if (clusters.size() == 0 && flagged_coords.size() != 0) {
+            // TODO: handle this
+            printf("Error: clusters seeds unable to detect flagged points.\n");
+            return;
+        }
+
         for (vec2i coord : flagged_coords) {
             int i = coord.x, j = coord.y;
 
@@ -153,6 +162,8 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
 
         // for each cluster found, calculate the block starting corner and size:
         for (cluster_t c : clusters) {
+
+            if (c.points.size() == 0) continue; // TODO: handle redundant clusters
 
             int min_x, min_y, max_x, max_y;
             min_x = max_x = c.points[0].x;

@@ -13,6 +13,7 @@
 #include "mkl_vsl.h"
 #include "mkl_spblas.h"
 
+// TODO: change to run time option
 #ifdef AMR_ENABLED
 #include "amr/amr_interface.hpp"
 #else
@@ -158,12 +159,13 @@ int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dat
 
 // utils/fileio.cpp
 extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
-void read_field_data(const char *filepath, data_t *data, int length);
-void save_data(char *file_name, data_t *data, int length);
-void save_strings2(char *file_name, std::vector <vec2i> *v);
-void save_strings3(char *file_name, std::vector <vec3i> *v);
-void open_output_filestreams();
-void close_output_filestreams();
+void fio_open_output_filestreams();
+void fio_close_output_filestreams();
+void fio_read_field_data(const char *filepath, data_t *data, int length);
+void fio_save_field_data(char *file_name, data_t *data, int length);
+void fio_save_strings2(char *file_name, std::vector <vec2i> *v);
+void fio_save_strings3(char *file_name, std::vector <vec3i> *v);
+void fio_save_flagged_data(char *file_name, int *data, int length);
 
 // utils/read_parameters.cpp
 void read_parameter_file(char *fname);

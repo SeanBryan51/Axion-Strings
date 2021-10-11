@@ -13,15 +13,14 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
 
     integrate_level(hierarchy, level, tau_local);
 
-    // Refine at a specific timestep (not everytime as it is computationally expensive?).
+    // Random notes:
+    // - Refine at a specific timestep (not everytime as it is computationally expensive?).
     // Solution: integrate_level() should check the refinement condition after integrating fields.
-
-    // Buffers allow features to move within a patch between refinement periods. Can also gamble by using
+    // - Buffers allow features to move within a patch between refinement periods. Can also gamble by using
     // a very accurate refinement criterion so we can be sure we don't lose resolution of features in between 
     // refinement periods?
     // Solution: for now just check after every integration.
-
-    // Actually this should be executed almost every time, for example what if the current level no longer satifies the refinement
+    // - Actually this should be executed almost every time, for example what if the current level no longer satifies the refinement
     // condition and all higher levels need to be freed?
 
     // assume 2D for now:
@@ -29,8 +28,7 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
     std::vector<int> block_size;
 
     // Populate arguments block_coords and block_size with optimal boxes for refinement:
-    // TODO: imediate segfault, case when entire grid is flagged?
-    // gen_refinement_blocks(block_coords, block_size, hierarchy, level);
+    gen_refinement_blocks(block_coords, block_size, hierarchy, level);
 
     // This is going to be one hell of a function!
     regrid(hierarchy, block_coords, block_size, level);
@@ -63,45 +61,6 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
     float dx = parameters.space_step / pow(REFINEMENT_FACTOR, level);
     float dt = parameters.time_step / pow(REFINEMENT_FACTOR, level);
 
-#if 0
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < length; i++) {
-        data.phi1[i] += dt * (data.phidot1[i] + 0.5f * data.ker1_curr[i] * dt);
-        data.phi2[i] += dt * (data.phidot2[i] + 0.5f * data.ker2_curr[i] * dt);
-    }
-
-    // tau += dt; // Do this only on the root level
-
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < length; i++) {
-        data_t lap1, lap2;
-        if (NDIMS == 2) {
-            int x, y;
-            coordinate2(&x, &y, i, N);
-            lap1 = laplacian2(data.phi1, x, y, N) / pow_2(dx);
-            lap2 = laplacian2(data.phi2, x, y, N) / pow_2(dx);
-        } else {
-            int x, y, z;
-            coordinate3(&x, &y, &z, i, N);
-            lap1 = laplacian3(data.phi1, x, y, z, N) / pow_2(dx);
-            lap2 = laplacian3(data.phi2, x, y, z, N) / pow_2(dx);
-        }
-        data.ker1_next[i] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
-        data.ker2_next[i] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
-    }
-
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < length; i++) {
-        data.phidot1[i] += 0.5f * (data.ker1_curr[i] + data.ker1_next[i]) * dt;
-        data.phidot2[i] += 0.5f * (data.ker2_curr[i] + data.ker2_next[i]) * dt;
-    }
-
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < length; i++) {
-        data.ker1_curr[i] = data.ker1_next[i];
-        data.ker2_curr[i] = data.ker2_next[i];
-    }
-#endif
 
     int n_blocks = data.b_index.size();
     for (int b_id = 0; b_id < n_blocks; b_id++) {
@@ -145,8 +104,10 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
 
             data_t lap1 = laplacian2(phi1, i, j, b_size) / pow_2(dx);
             data_t lap2 = laplacian2(phi2, i, j, b_size) / pow_2(dx);
-            ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
-            ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
+            ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            // ker1_next[l] = lap1 - parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
+            // ker2_next[l] = lap2 - parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
         }
 
         #pragma omp parallel for schedule(static)
@@ -180,7 +141,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             data_t grad_sq1 = gradient_squared2(phi1, i, j, b_size);
             data_t grad_sq2 = gradient_squared2(phi2, i, j, b_size);
 
-            float threshold = 15.0f;
+            float threshold = 20.0f; // TODO: make runtime parameter
             flagged[l] = (sqrt(grad_sq1 + grad_sq2) > threshold);
         }
     }
