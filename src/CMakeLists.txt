@@ -41,7 +41,6 @@ add_library(
     amr/amr_run.cpp
     amr/amr_integrate.cpp
     amr/amr_point_clustering.cpp
-    amr/amr_hierarchy.cpp
 )
 
 target_include_directories(amr PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
