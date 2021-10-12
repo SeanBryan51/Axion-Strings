@@ -132,6 +132,27 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].addr = &parameters.thr;
     p_list[n_params].type = INT;
     n_params++;
+
+    strcpy(p_list[n_params].tag, "enable_amr");
+    p_list[n_params].addr = &parameters.enable_amr;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "init_from_snapshot");
+    p_list[n_params].addr = &parameters.init_from_snapshot;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "tau_initial");
+    p_list[n_params].addr = &parameters.tau_initial;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "refinement_threshold");
+    p_list[n_params].addr = &parameters.refinement_threshold;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
     return n_params;
 }
 

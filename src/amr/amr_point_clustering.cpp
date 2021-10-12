@@ -2,6 +2,11 @@
 
 #include <fftw3.h>
 
+typedef struct cluster_t {
+    vec2i centroid;
+    std::vector<vec2i> points;
+} cluster_t;
+
 /**
  * See question 3.11. from http://www.fftw.org/faq/
  */
@@ -17,11 +22,34 @@ static void shift2D(fftw_complex *arr, int N) {
 }
 
 /**
- * TODO: explain
+ * Given a binary solution vector where '1' represents a point flagged for refinement, this function generates an appropriate set
+ * of initial seed points around which we will build clusters. This is done by convolving the binary 'image' with a gaussian
+ * filter and locating the peaks in the convolved 'image'.
+ * 
+ * @param ld : "leading dimension" of image data, i.e. the dimension of the buffer.
+ * 
  * TODO: applying a gaussian filter in real space might be faster than the fft? O(N) vs O(NlogN)
  */
-void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int b_size) {
+static void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int ld, int length) {
 
+    // TODO:
+
+    // Apply gaussian blur:
+    double *flagged_convolved = (double *) calloc(length, sizeof(double));
+
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j;
+        coordinate2(&i, &j, m, ld);
+        // 3x3 gaussian kernel (assuming 2D of course):
+        flagged_convolved[m] = 0.0f;
+    }
+
+    // Apply maximum filter and find peaks:
+
+    free(flagged_convolved);
+
+#if 0
     int length = pow_2(b_size);
 
     fftw_plan_with_nthreads(omp_get_max_threads());
@@ -89,7 +117,6 @@ void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, i
             clusters.push_back((cluster_t) { .centroid = {i, j}, .points = {}});
     }
 
-
     // TODO: need to resolve case when two peaks are close to each other?
 
 #if 0
@@ -105,6 +132,7 @@ void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, i
     fftw_free(f_real);
     fftw_free(f_fourier);
     free(flagged_preprocessed);
+#endif
 }
 
 
@@ -112,16 +140,18 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
 
     level_data data = hierarchy[level];
 
-    int n_blocks = data.b_index.size();
+    int n_blocks = data.b_data.size();
     for (int b_id = 0; b_id < n_blocks; b_id++) {
-        int b_size = data.b_size[b_id];
-        int b_length = b_size * b_size; // assume 2D for now.
+        int b_size = data.b_data[b_id].size;
+        int b_ij_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size;
+        // offset at which i, j = b_size - stencil - 1 = b_ij_size - 1
+        int b_max_offset = (b_ij_size - 1) + b_size * (b_ij_size - 1); // assume 2D for now.
 
-        int *flagged = &data.flagged[data.b_index[b_id]];
+        int *flagged = &data.flagged[data.b_data[b_id].index];
 
         std::vector<cluster_t> clusters;
 
-        gen_initial_cluster_seeds(clusters, flagged, b_size);
+        gen_initial_cluster_seeds(clusters, flagged, b_size, b_max_offset + 1);
 
         // Naive k-nearest-neighbour (KNN) solution:
 
@@ -130,7 +160,7 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
         #pragma omp declare reduction (merge : std::vector<vec2i> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
         #pragma omp parallel for reduction(merge: flagged_coords)
-        for (int m = 0; m < b_length; m++) {
+        for (int m = 0; m <= b_max_offset; m++) {
             if (flagged[m]) {
                 int i, j;
                 coordinate2(&i, &j, m, b_size);
@@ -148,6 +178,9 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
             int i = coord.x, j = coord.y;
 
             // Push point into nearest cluster:
+            // TODO: don't forget periodic boundary conditions LOL.
+            // Soln: fuck this, impose that clusters cannot be on top of the periodic boundary (can't even get my head around it)
+            //       need to modify point clustering function so seeds are generated as if there are no periodic boundary conds.
             float min_dist = pow_2(i - clusters[0].centroid.x) + pow_2(j - clusters[0].centroid.y);
             int nearest = 0; // track id of nearest cluster.
             for (int c_id = 0; c_id < clusters.size(); c_id++) {

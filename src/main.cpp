@@ -16,11 +16,8 @@ int main(int argc, char *argv[]) {
 
     double start = omp_get_wtime();
 
-#ifdef AMR_ENABLED
-    run_amr();
-#else
-    run_standard();
-#endif
+    if (parameters.enable_amr) run_amr();
+    else run_standard();
 
     fprintf(fp_main_output, "Time taken: %f seconds\n", omp_get_wtime() - start);
 

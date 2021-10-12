@@ -21,9 +21,8 @@ void run_amr() {
 
     std::vector<level_data> hierarchy;
     level_data root_level;
-    root_level.size = get_length();
-    root_level.b_index = {0}; // the root grid starts at index 0
-    root_level.b_size = {parameters.N};
+    root_level.length = get_length();
+    root_level.b_data = { (block_data) {.index = 0, .buffer_index = 0, .size = parameters.N, .has_buffer = 0} };
 
     set_physics_variables();
 
@@ -31,26 +30,35 @@ void run_amr() {
     assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
     assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
 
-    root_level.phi1      = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.phi2      = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.phidot1   = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.phidot2   = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.ker1_curr = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.ker2_curr = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.ker1_next = (data_t *) calloc(root_level.size, sizeof(data_t));
-    root_level.ker2_next = (data_t *) calloc(root_level.size, sizeof(data_t));
+    root_level.phi1      = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.phi2      = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.phidot1   = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.phidot2   = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.ker1_curr = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.ker2_curr = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.ker1_next = (data_t *) calloc(root_level.length, sizeof(data_t));
+    root_level.ker2_next = (data_t *) calloc(root_level.length, sizeof(data_t));
     root_level.axion = NULL;
     root_level.saxion = NULL;
 
     assert(root_level.phi1 != NULL && root_level.phi2 != NULL && root_level.phidot1 != NULL && root_level.phidot2 != NULL);
     assert(root_level.ker1_curr != NULL && root_level.ker2_curr != NULL && root_level.ker1_next != NULL && root_level.ker2_next != NULL);
 
-    root_level.flagged = (int *) calloc(root_level.size, sizeof(int));
+    root_level.flagged = (int *) calloc(root_level.length, sizeof(int));
 
     assert(root_level.flagged != NULL);
 
     // Set initial field values:
-    gaussian_thermal(root_level.phi1, root_level.phi2, root_level.phidot1, root_level.phidot2);
+    if (parameters.init_from_snapshot) {
+        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phi1", root_level.phi1, root_level.length);
+        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phi2", root_level.phi2, root_level.length);
+        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phidot1", root_level.phidot1, root_level.length);
+        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phidot2", root_level.phidot2, root_level.length);
+        tau = parameters.tau_initial;
+        parameters.lambdaPRS /= pow_2(tau);
+    } else {
+        gaussian_thermal(root_level.phi1, root_level.phi2, root_level.phidot1, root_level.phidot2);
+    }
 
     hierarchy = {root_level};
 
@@ -65,6 +73,7 @@ void run_amr() {
     int n_snapshots_written = 0;
 
     int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
+    final_step *= 2; // (to observe shrinking of string cores)
     for (int tstep = 0; tstep < final_step; tstep++) {
 
         if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
@@ -83,14 +92,14 @@ void run_amr() {
                 sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
                 sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
 
-                fio_save_field_data(fname_phi1, root_level.phi1, root_level.size);
-                fio_save_field_data(fname_phi2, root_level.phi2, root_level.size);
+                fio_save_field_data(fname_phi1, root_level.phi1, root_level.length);
+                fio_save_field_data(fname_phi2, root_level.phi2, root_level.length);
             }
 #if 0
             // output flagged points:
             char fname_flagged[50];
             sprintf(fname_flagged, "snapshot%d-flagged", n_snapshots_written);
-            fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.size);
+            fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.length);
 #endif
             n_snapshots_written++;
         }
@@ -99,7 +108,7 @@ void run_amr() {
 
         tau += parameters.time_step;
 
-        debug(root_level, root_level.size, tstep);
+        debug(root_level, root_level.length, tstep);
     }
 
 #if 0

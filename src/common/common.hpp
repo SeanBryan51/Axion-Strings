@@ -13,12 +13,8 @@
 #include "mkl_vsl.h"
 #include "mkl_spblas.h"
 
-// TODO: change to run time option
-#ifdef AMR_ENABLED
 #include "amr/amr_interface.hpp"
-#else
 #include "standard/s_interface.hpp"
-#endif
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double data_t;
@@ -61,6 +57,11 @@ extern struct parameters {
     int sample_background;
 
     int thr;
+
+    int   enable_amr;
+    float refinement_threshold;
+    int   init_from_snapshot;
+    float tau_initial;
 
 } parameters;
 
@@ -161,7 +162,7 @@ int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dat
 extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 void fio_open_output_filestreams();
 void fio_close_output_filestreams();
-void fio_read_field_data(const char *filepath, data_t *data, int length);
+void fio_read_field_data(char *file_name, data_t *data, int length);
 void fio_save_field_data(char *file_name, data_t *data, int length);
 void fio_save_strings2(char *file_name, std::vector <vec2i> *v);
 void fio_save_strings3(char *file_name, std::vector <vec3i> *v);

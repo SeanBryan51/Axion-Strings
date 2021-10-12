@@ -61,27 +61,28 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
     float dx = parameters.space_step / pow(REFINEMENT_FACTOR, level);
     float dt = parameters.time_step / pow(REFINEMENT_FACTOR, level);
 
+    // TODO: this is so broken (indexing backwards to access buffer)
 
-    int n_blocks = data.b_index.size();
+    int n_blocks = data.b_data.size();
     for (int b_id = 0; b_id < n_blocks; b_id++) {
-        int b_size = data.b_size[b_id];
-        int b_ij_size = (level == 0) ? b_size : b_size - 2; // the root level does not have a buffer!
-        // assume 2D for now:
-        int b_length = b_size * b_size;
+        int b_size = data.b_data[b_id].size;
+        int b_ij_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size;
+        // offset at which i, j = b_ij_size - stencil - 1
+        int b_max_offset = (b_ij_size - 1) + b_size * (b_ij_size - 1); // assume 2D for now.
 
-        data_t *phi1      = &data.phi1[data.b_index[b_id]];
-        data_t *phi2      = &data.phi2[data.b_index[b_id]];
-        data_t *phidot1   = &data.phidot1[data.b_index[b_id]];
-        data_t *phidot2   = &data.phidot2[data.b_index[b_id]];
-        data_t *ker1_curr = &data.ker1_curr[data.b_index[b_id]];
-        data_t *ker2_curr = &data.ker2_curr[data.b_index[b_id]];
-        data_t *ker1_next = &data.ker1_next[data.b_index[b_id]];
-        data_t *ker2_next = &data.ker2_next[data.b_index[b_id]];
+        data_t *phi1      = &data.phi1[data.b_data[b_id].index];
+        data_t *phi2      = &data.phi2[data.b_data[b_id].index];
+        data_t *phidot1   = &data.phidot1[data.b_data[b_id].index];
+        data_t *phidot2   = &data.phidot2[data.b_data[b_id].index];
+        data_t *ker1_curr = &data.ker1_curr[data.b_data[b_id].index];
+        data_t *ker2_curr = &data.ker2_curr[data.b_data[b_id].index];
+        data_t *ker1_next = &data.ker1_next[data.b_data[b_id].index];
+        data_t *ker2_next = &data.ker2_next[data.b_data[b_id].index];
 
-        int *flagged = &data.flagged[data.b_index[b_id]];
+        int *flagged = &data.flagged[data.b_data[b_id].index];
 
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l < b_length; l++) {
+        for (int l = 0; l <= b_max_offset; l++) {
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check if current index is a part of the buffer:
@@ -95,7 +96,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
         // tau += dt; // Do this only on the root level
 
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l < b_length; l++) {
+        for (int l = 0; l <= b_max_offset; l++) {
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
@@ -104,14 +105,14 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
 
             data_t lap1 = laplacian2(phi1, i, j, b_size) / pow_2(dx);
             data_t lap2 = laplacian2(phi2, i, j, b_size) / pow_2(dx);
-            ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
-            ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
-            // ker1_next[l] = lap1 - parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
-            // ker2_next[l] = lap2 - parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
+            // ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            // ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            ker1_next[l] = lap1 - parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
+            ker2_next[l] = lap2 - parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
         }
 
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l < b_length; l++) {
+        for (int l = 0; l <= b_max_offset; l++) {
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
@@ -123,14 +124,14 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
         }
 
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l < b_length; l++) {
+        for (int l = 0; l <= b_max_offset; l++) {
             ker1_curr[l] = ker1_next[l];
             ker2_curr[l] = ker2_next[l];
         }
 
         // flag points that meet refinement criterion:
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l < b_length; l++) {
+        for (int l = 0; l <= b_max_offset; l++) {
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
@@ -141,8 +142,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             data_t grad_sq1 = gradient_squared2(phi1, i, j, b_size);
             data_t grad_sq2 = gradient_squared2(phi2, i, j, b_size);
 
-            float threshold = 20.0f; // TODO: make runtime parameter
-            flagged[l] = (sqrt(grad_sq1 + grad_sq2) > threshold);
+            flagged[l] = (sqrt(grad_sq1 + grad_sq2) > parameters.refinement_threshold);
         }
     }
 

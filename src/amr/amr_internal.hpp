@@ -2,6 +2,17 @@
 
 #include "common/common.hpp"
 
+// Note: to access elements a[i,j] = a[i + b_size * j] where i, j = 0, 1, ..., b_size - stencil - 1 where stencil will often be 2 when including a buffer.
+typedef struct block_data {
+    // TODO: this is not how you should do it!
+    //       treat the buffer index as the 'global index'
+    //       then have a 'relative index' that points to the start of the solution vector relative to buffer index.
+    int index; // "block index": index gives the starting index in the solution vector for the nth block. Note the starting index does not start at the beggining of the buffer boundary conditions, but starts at the actual solution vector.
+    int buffer_index; // "block buffer index": buffer index gives the starting index for the buffer boundary conditions of the nth block. When there is no buffer, buffer_index = index.
+    int size; // "block size": size of square grid (including the buffer), i.e. N.
+    int has_buffer;
+} block_data;
+
 /*
  * Solution vectors contain data for all blocks/patches defined on the level.
  * The location of the solution vector for each patch in the array is specified by
@@ -10,8 +21,7 @@
  * Note: assume grids are square for simplicity
  */
 typedef struct level_data {
-    // TODO: need better names than size and length
-    int size; // size of current solution vector
+    int length; // length of current solution vector
 
     data_t *phi1;       // phi_1 field values
     data_t *phi2;       // phi_2 field values
@@ -26,8 +36,7 @@ typedef struct level_data {
 
     int *flagged; // boolean vector used to flag grid points for refinement.
 
-    std::vector<int> b_index; // "block index": b_index[n] gives the starting index in the solution vector for the nth block. Note the starting index does not start at the beggining of the buffer boundary conditions, but starts at the actual solution vector.
-    std::vector<int> b_size;  // "block size": size of square grid.
+    std::vector<block_data> b_data; // Note: number of total blocks in level is given by b_data.size() 
 
     // worry about coefficient matrix later:
     // sparse_matrix_t coefficient_matrix;
@@ -72,14 +81,6 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
 void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_local);
 
 // amr_point_clustering.cpp
-
-// TODO: remove
-typedef struct cluster_t {
-    vec2i centroid;
-    std::vector<vec2i> points;
-} cluster_t;
-
-void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int b_size); // TODO: remove
 void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &block_size, std::vector<level_data> hierarchy, int level);
 
 // amr_hierarchy.cpp

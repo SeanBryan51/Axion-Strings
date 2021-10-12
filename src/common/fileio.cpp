@@ -2,9 +2,13 @@
 
 FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 
-void fio_read_field_data(const char *filepath, data_t *data, int length) {
+void fio_read_field_data(char *file_name, data_t *data, int length) {
 
-    FILE *fp = fopen(filepath, "r");
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
+    assert(path != NULL);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+
+    FILE *fp = fopen(path, "r");
     assert(fp != NULL);
 
     fread(data, sizeof(data_t), length, fp);
