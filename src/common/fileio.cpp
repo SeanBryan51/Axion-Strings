@@ -32,6 +32,23 @@ void fio_save_field_data(char *file_name, data_t *data, int length) {
     fclose(fp);
 }
 
+void fio_save_field_data_as_slice(char *file_name, data_t *data, int length, int N) {
+
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
+    assert(path != NULL);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+
+    fprintf(fp_main_output, "  Saving data... at %s\n", path);
+
+    FILE *fp = fopen(path, "w");
+    assert(fp != NULL);
+
+    // A bit hacky but this should save a slice from one of the faces of the 3-dimensional volume.
+    fwrite(data, sizeof(data_t), N * N, fp);
+
+    fclose(fp);
+}
+
 void fio_save_flagged_data(char *file_name, int *data, int length) {
 
     char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
@@ -44,6 +61,25 @@ void fio_save_flagged_data(char *file_name, int *data, int length) {
     assert(fp != NULL);
 
     fwrite(data, sizeof(int), length, fp);
+
+    fclose(fp);
+}
+
+void fio_save_pk(char *file_name, data_t *pk, data_t *ks, int *count, int n_bins) {
+
+    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
+    assert(path != NULL);
+    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+
+    fprintf(fp_main_output, "  Saving data... at %s\n", path);
+
+    FILE *fp = fopen(path, "w");
+    assert(fp != NULL);
+
+    fprintf(fp, "k,pk,n_modes\n");
+    for (int i = 0; i < n_bins; i++) {
+        if(count[i]) fprintf(fp, "%e,%e,%d\n", ks[i], pk[i], count[i]);
+    }
 
     fclose(fp);
 }
