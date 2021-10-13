@@ -24,6 +24,7 @@ add_library(
     common/physics.cpp
     common/init.cpp
     common/string_finding.cpp
+    common/pk_estimation.cpp
     common/mkl_wrapper.cpp
     common/fileio.cpp
     common/read_parameters.cpp

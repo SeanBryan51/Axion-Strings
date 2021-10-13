@@ -138,6 +138,9 @@ void gaussian_thermal(data_t *phi1, data_t *phi2, data_t *phidot1, data_t *phido
 int cores2(data_t *axion, std::vector <vec2i> &s);
 int cores3(data_t *axion, std::vector <vec3i> &s);
 
+// pk_estimation.cpp
+void output_powerspec(data_t *data);
+
 // mkl_wrapper.cpp
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,
                                                const sparse_index_base_t indexing,
@@ -164,9 +167,11 @@ void fio_open_output_filestreams();
 void fio_close_output_filestreams();
 void fio_read_field_data(char *file_name, data_t *data, int length);
 void fio_save_field_data(char *file_name, data_t *data, int length);
+void fio_save_field_data_as_slice(char *file_name, data_t *data, int length, int N);
 void fio_save_strings2(char *file_name, std::vector <vec2i> *v);
 void fio_save_strings3(char *file_name, std::vector <vec3i> *v);
 void fio_save_flagged_data(char *file_name, int *data, int length);
+void fio_save_pk(char *file_name, data_t *pk, data_t *ks, int *count, int n_bins);
 
 // utils/read_parameters.cpp
 void read_parameter_file(char *fname);
