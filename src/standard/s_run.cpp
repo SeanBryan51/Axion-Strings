@@ -166,8 +166,15 @@ void run_standard() {
                 sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
                 sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
 
-                fio_save_field_data(fname_phi1, data.phi1, length);
-                fio_save_field_data(fname_phi2, data.phi2, length);
+                if (parameters.NDIMS == 2) {
+                    fio_save_field_data(fname_phi1, data.phi1, length);
+                    fio_save_field_data(fname_phi2, data.phi2, length);
+                }
+
+                if (parameters.NDIMS == 3) {
+                    fio_save_field_data_as_slice(fname_phi1, data.phi1, length, parameters.N);
+                    fio_save_field_data_as_slice(fname_phi2, data.phi2, length, parameters.N);
+                }
             }
 
             if (parameters.save_strings) {
