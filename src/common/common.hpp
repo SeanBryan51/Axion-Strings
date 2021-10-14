@@ -139,7 +139,7 @@ int cores2(data_t *axion, std::vector <vec2i> &s);
 int cores3(data_t *axion, std::vector <vec3i> &s);
 
 // pk_estimation.cpp
-void output_powerspec(data_t *data);
+void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag);
 
 // mkl_wrapper.cpp
 sparse_status_t mkl_wrapper_sparse_create_coo (sparse_matrix_t *A,

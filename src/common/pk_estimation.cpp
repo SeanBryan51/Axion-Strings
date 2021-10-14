@@ -2,6 +2,34 @@
 
 #include <fftw3.h>
 
+/*
+ * See question 3.11. from http://www.fftw.org/faq/
+ */
+static void shift2D(fftw_complex *arr, int N) {
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j;
+        coordinate2(&i, &j, m, N);
+        arr[m][0] *= pow(-1.0f, i + j);
+        arr[m][1] *= pow(-1.0f, i + j);
+    }
+}
+
+/*
+ * See question 3.11. from http://www.fftw.org/faq/
+ */
+static void shift3D(fftw_complex *arr, int N) {
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j, k;
+        coordinate3(&i, &j, &k, m, N);
+        arr[m][0] *= pow(-1.0f, i + j + k);
+        arr[m][1] *= pow(-1.0f, i + j + k);
+    }
+}
+
 /**
  * 
  * For a real field just set @param data_imag to NULL.
@@ -9,6 +37,7 @@
 void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
 
     int N = parameters.N;
+    float L = N * parameters.space_step;
     int NDIMS = parameters.NDIMS;
     int length = get_length();
     int n_bins = N / 2 - 1; // N/2 - 1 because we ignore the k = 0 mode.
@@ -33,6 +62,9 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
     }
 
     if (NDIMS == 2) {
+
+        shift2D(data, N);
+
         plan = fftw_plan_dft_2d(N, N, data, data_k, FFTW_FORWARD, FFTW_ESTIMATE);
         fftw_execute(plan);
 
@@ -63,10 +95,14 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
         for (int m = 0; m < n_bins; m++) {
             ks[m] /= count[m]; // compute average k value within bin.
             pk[m] /= 2.0f * M_PI * ks[m]; // angular average over '2-dimensional shell'
+            ks[m] *= 2.0f * M_PI / L; // convert to dimensionful k.
         }
     }
 
     if (NDIMS == 3) {
+
+        shift3D(data, N);
+
         plan = fftw_plan_dft_3d(N, N, N, data, data_k, FFTW_FORWARD, FFTW_ESTIMATE);
         fftw_execute(plan);
 
@@ -99,6 +135,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
         for (int m = 0; m < n_bins; m++) {
             ks[m] /= count[m]; // compute average k value within bin.
             pk[m] /= 4.0f * M_PI * pow_2(ks[m]); // angular average over '3-dimensional shell'
+            ks[m] *= 2.0f * M_PI / L; // convert to dimensionful k.
         }
     }
 
