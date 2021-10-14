@@ -13,7 +13,8 @@ mkdir build
 cmake -S . -B build
 ```
 2. Build / compile
-```cmake --build build
+```
+cmake --build build
 ```
 3. Then to run the simulation
 ```
