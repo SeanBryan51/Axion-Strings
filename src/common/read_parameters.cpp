@@ -33,9 +33,14 @@ static int parameters_to_read(Parameter *p_list) {
 
     // Add additional parameters here:
 
-    strcpy(p_list[n_params].tag, "lambdaPRS");
-    p_list[n_params].addr = &parameters.lambdaPRS;
+    strcpy(p_list[n_params].tag, "lambda");
+    p_list[n_params].addr = &parameters.lambda;
     p_list[n_params].type = FLOAT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "enable_PRS");
+    p_list[n_params].addr = &parameters.enable_PRS;
+    p_list[n_params].type = INT;
     n_params++;
 
     strcpy(p_list[n_params].tag, "NDIMS");

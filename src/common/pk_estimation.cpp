@@ -42,7 +42,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
 
     int length = get_length();
 
-    int n_bins = N / 2 - 1; // N/2 - 1 because we ignore the k = 0 mode.
+    int n_bins = N / 2;
     data_t *pk = (data_t *) calloc(n_bins, sizeof(data_t));
     data_t *ks = (data_t *) calloc(n_bins, sizeof(data_t));
     int *count = (int *) calloc(n_bins, sizeof(int)); // count the number of modes in each bin.
@@ -84,6 +84,8 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
             if (kmag == 0.0f || kmag > N/2) continue; // ignore zero mode (field average) and all modes k > N/2
 
             int ps_index = floor(kmag) - 1;
+            assert(ps_index < n_bins);
+
             pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]);
             ks[ps_index] += kmag;
             count[ps_index]++;
@@ -131,6 +133,8 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
             if (kmag == 0.0f || kmag > N/2) continue; // ignore zero mode (field average) and all modes k > N/2
 
             int ps_index = floor(kmag) - 1;
+            assert(ps_index < n_bins);
+
             pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]);
             ks[ps_index] += kmag;
             count[ps_index]++;

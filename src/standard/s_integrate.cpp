@@ -204,8 +204,8 @@ void vvsl_field_rescaled(all_data data) {
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        data.ker1_next[i] += - 1.0f / pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
-        data.ker2_next[i] += - 1.0f / pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
+        data.ker1_next[i] += - 1.0f / pow_2(tau) * parameters.lambda * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
+        data.ker2_next[i] += - 1.0f / pow_2(tau) * parameters.lambda * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
     }
 
     #pragma omp parallel for schedule(static)
@@ -251,8 +251,8 @@ void vvsl_hamiltonian_form(all_data data) {
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        data.ker1_next[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
-        data.ker2_next[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
+        data.ker1_next[i] += - pow_2(tau) * parameters.lambda * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
+        data.ker2_next[i] += - pow_2(tau) * parameters.lambda * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
     }
 
     #pragma omp parallel for schedule(static)

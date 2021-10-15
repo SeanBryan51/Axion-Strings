@@ -1,6 +1,11 @@
 #include "amr_internal.hpp"
 #include "amr_interface.hpp"
 
+const char *phi1_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi1";
+const char *phi2_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi2";
+const char *phidot1_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot1";
+const char *phidot2_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot2";
+
 static void debug(level_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
         if (isnan(data.phi1[i]) || isnan(data.phi2[i])) {
@@ -22,7 +27,7 @@ void run_amr() {
     std::vector<level_data> hierarchy;
     level_data root_level;
     root_level.length = get_length();
-    root_level.b_data = { (block_data) {.index = 0, .buffer_index = 0, .size = parameters.N, .has_buffer = 0} };
+    root_level.b_data = { (block_data) {.index_global = 0, .index_sv = 0, .size = parameters.N, .has_buffer = 0} };
 
     set_physics_variables();
 
@@ -50,12 +55,12 @@ void run_amr() {
 
     // Set initial field values:
     if (parameters.init_from_snapshot) {
-        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phi1", root_level.phi1, root_level.length);
-        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phi2", root_level.phi2, root_level.length);
-        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phidot1", root_level.phidot1, root_level.length);
-        fio_read_field_data("4-strings-ic-2DN128-TAU64/snapshot-final-phidot2", root_level.phidot2, root_level.length);
+        fio_read_field_data(phi1_ic_path, root_level.phi1, root_level.length);
+        fio_read_field_data(phi2_ic_path, root_level.phi2, root_level.length);
+        fio_read_field_data(phidot1_ic_path, root_level.phidot1, root_level.length);
+        fio_read_field_data(phidot2_ic_path, root_level.phidot2, root_level.length);
         tau = parameters.tau_initial;
-        parameters.lambdaPRS /= pow_2(tau);
+        parameters.lambda /= pow_2(tau);
     } else {
         gaussian_thermal(root_level.phi1, root_level.phi2, root_level.phidot1, root_level.phidot2);
     }
@@ -83,7 +88,7 @@ void run_amr() {
             fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
             fprintf(fp_snapshot_timings, "%f,", tau);
             fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
-            fprintf(fp_snapshot_timings, "%f,", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambda != 0.0f) ? string_tension() : 0.0f);
             fprintf(fp_snapshot_timings, "\n");
 
             if (parameters.save_fields) {
@@ -149,5 +154,6 @@ void run_amr() {
         free(level.ker2_next);
         free(level.axion);
         free(level.saxion);
+        free(level.flagged);
     }
 }

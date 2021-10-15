@@ -157,7 +157,7 @@ void run_standard() {
             fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
             fprintf(fp_snapshot_timings, "%f,", tau);
             fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
-            fprintf(fp_snapshot_timings, "%f,", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambda != 0.0f) ? string_tension() : 0.0f);
             fprintf(fp_snapshot_timings, "\n");
 
             if (parameters.save_fields) {

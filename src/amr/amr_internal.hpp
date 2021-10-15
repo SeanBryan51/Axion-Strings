@@ -4,19 +4,16 @@
 
 // Note: to access elements a[i,j] = a[i + b_size * j] where i, j = 0, 1, ..., b_size - stencil - 1 where stencil will often be 2 when including a buffer.
 typedef struct block_data {
-    // TODO: this is not how you should do it!
-    //       treat the buffer index as the 'global index'
-    //       then have a 'relative index' that points to the start of the solution vector relative to buffer index.
-    int index; // "block index": index gives the starting index in the solution vector for the nth block. Note the starting index does not start at the beggining of the buffer boundary conditions, but starts at the actual solution vector.
-    int buffer_index; // "block buffer index": buffer index gives the starting index for the buffer boundary conditions of the nth block. When there is no buffer, buffer_index = index.
-    int size; // "block size": size of square grid (including the buffer), i.e. N.
+    int index_global; // "global index": index where memory starts for the buffer (including buffers).
+    int index_sv;     // "solution vector index": index where the actual solution vector starts in the array. When there is no buffer, index_sv = 0.
+    int size;         // "block size": size of square grid (including the buffer), i.e. N.
     int has_buffer;
 } block_data;
 
-/*
+/**
+ * 
  * Solution vectors contain data for all blocks/patches defined on the level.
- * The location of the solution vector for each patch in the array is specified by
- * the b_index array.
+ * The information for each block in the array is specified by the b_data vector.
  * 
  * Note: assume grids are square for simplicity
  */
@@ -46,8 +43,8 @@ typedef struct level_data {
 /*
  * Note: remember to divide by the square of the lattice spacing.
  */
-inline data_t laplacian2(data_t *field, int i, int j, int N) {
-    return field[offset2(i+1,j,N)] + field[offset2(i,j+1,N)] - 4.0f*field[offset2(i,j,N)] + field[offset2(i-1,j,N)] + field[offset2(i,j-1,N)];
+inline data_t laplacian2(data_t *field, int i, int j, int N, int so = 0) {
+    return field[offset2(i+1,j,N,so)] + field[offset2(i,j+1,N,so)] - 4.0f*field[offset2(i,j,N,so)] + field[offset2(i-1,j,N,so)] + field[offset2(i,j-1,N,so)];
 }
 
 /*
@@ -60,9 +57,9 @@ inline data_t laplacian3(data_t *field, int i, int j, int k, int N) {
 /*
  * Note: remember to divide by the square of the lattice spacing.
  */
-inline data_t gradient_squared2(data_t *field, int i, int j, int N) {
-    data_t grad_x = field[offset2(i+1,j,N)] - 2.0f*field[offset2(i,j,N)] + field[offset2(i-1,j,N)];
-    data_t grad_y = field[offset2(i,j+1,N)] - 2.0f*field[offset2(i,j,N)] + field[offset2(i,j-1,N)];
+inline data_t gradient_squared2(data_t *field, int i, int j, int N, int so = 0) {
+    data_t grad_x = field[offset2(i+1,j,N,so)] - 2.0f*field[offset2(i,j,N,so)] + field[offset2(i-1,j,N,so)];
+    data_t grad_y = field[offset2(i,j+1,N,so)] - 2.0f*field[offset2(i,j,N,so)] + field[offset2(i,j-1,N,so)];
     return pow_2(grad_x) + pow_2(grad_y);
 }
 

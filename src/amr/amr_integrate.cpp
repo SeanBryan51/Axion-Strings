@@ -55,42 +55,96 @@ void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local
 void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_local) {
 
     level_data data = hierarchy[level];
-    // int NDIMS = parameters.NDIMS;
-    // int length = data.size;
 
     float dx = parameters.space_step / pow(REFINEMENT_FACTOR, level);
     float dt = parameters.time_step / pow(REFINEMENT_FACTOR, level);
 
-    // TODO: this is so broken (indexing backwards to access buffer)
-
     int n_blocks = data.b_data.size();
     for (int b_id = 0; b_id < n_blocks; b_id++) {
+        // buffer size
         int b_size = data.b_data[b_id].size;
-        int b_ij_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size;
-        // offset at which i, j = b_ij_size - stencil - 1
-        int b_max_offset = (b_ij_size - 1) + b_size * (b_ij_size - 1); // assume 2D for now.
+        // size of solution vector
+        int b_sv_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size; // TODO: hard coded stencil = 2
+        // starting index for solution vector
+        int b_sv_idx = data.b_data[b_id].index_sv;
+        // max offset at which i = j = b_size - stencil - 1 = b_sv_size - 1
+        int b_max_offset = b_sv_idx + (b_sv_size - 1) + b_size * (b_sv_size - 1); // assume 2D for now.
 
-        data_t *phi1      = &data.phi1[data.b_data[b_id].index];
-        data_t *phi2      = &data.phi2[data.b_data[b_id].index];
-        data_t *phidot1   = &data.phidot1[data.b_data[b_id].index];
-        data_t *phidot2   = &data.phidot2[data.b_data[b_id].index];
-        data_t *ker1_curr = &data.ker1_curr[data.b_data[b_id].index];
-        data_t *ker2_curr = &data.ker2_curr[data.b_data[b_id].index];
-        data_t *ker1_next = &data.ker1_next[data.b_data[b_id].index];
-        data_t *ker2_next = &data.ker2_next[data.b_data[b_id].index];
+        data_t *phi1      = &data.phi1[data.b_data[b_id].index_global];
+        data_t *phi2      = &data.phi2[data.b_data[b_id].index_global];
+        data_t *phidot1   = &data.phidot1[data.b_data[b_id].index_global];
+        data_t *phidot2   = &data.phidot2[data.b_data[b_id].index_global];
+        data_t *ker1_curr = &data.ker1_curr[data.b_data[b_id].index_global];
+        data_t *ker2_curr = &data.ker2_curr[data.b_data[b_id].index_global];
+        data_t *ker1_next = &data.ker1_next[data.b_data[b_id].index_global];
+        data_t *ker2_next = &data.ker2_next[data.b_data[b_id].index_global];
 
-        int *flagged = &data.flagged[data.b_data[b_id].index];
+        int *flagged = &data.flagged[data.b_data[b_id].index_global];
 
+        #pragma omp parrallel for schedule(static) collapse(2)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+                phi1[offset] += dt * (phidot1[offset] + 0.5f * ker1_curr[offset] * dt);
+                phi2[offset] += dt * (phidot2[offset] + 0.5f * ker2_curr[offset] * dt);
+            }
+        }
+
+        // tau += dt; // Do this only on the root level
+
+        #pragma omp parallel for schedule(static) collapse(2)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+                data_t lap1 = laplacian2(phi1, i, j, b_size, b_sv_idx) / pow_2(dx);
+                data_t lap2 = laplacian2(phi2, i, j, b_size, b_sv_idx) / pow_2(dx);
+                ker1_next[offset] = lap1 - parameters.lambda / pow(tau_local, 2.0f * parameters.enable_PRS) * phi1[offset] * (pow_2(phi1[offset]) + pow_2(phi2[offset]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
+                ker2_next[offset] = lap2 - parameters.lambda / pow(tau_local, 2.0f * parameters.enable_PRS) * phi2[offset] * (pow_2(phi1[offset]) + pow_2(phi2[offset]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
+            }
+        }
+
+        #pragma omp parallel for schedule(static) collapse(2)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+                phidot1[offset] += 0.5f * (ker1_curr[offset] + ker1_next[offset]) * dt;
+                phidot2[offset] += 0.5f * (ker2_curr[offset] + ker2_next[offset]) * dt;
+            }
+        }
+
+        #pragma omp parallel for schedule(static) collapse(2)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+                ker1_curr[offset] = ker1_next[offset];
+                ker2_curr[offset] = ker2_next[offset];
+            }
+        }
+
+        // flag points that meet refinement criterion:
+        #pragma omp parallel for schedule(static) collapse(2)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+
+                // Note: don't have to divide gradient by dx^2 for refinement criterion.
+                data_t grad_sq1 = gradient_squared2(phi1, i, j, b_size, b_sv_idx);
+                data_t grad_sq2 = gradient_squared2(phi2, i, j, b_size, b_sv_idx);
+
+                flagged[offset] = (sqrt(grad_sq1 + grad_sq2) > parameters.refinement_threshold);
+            }
+        }
+#if 0
         #pragma omp parallel for schedule(static)
-        for (int l = 0; l <= b_max_offset; l++) {
+        for (int m = b_sv_idx; m <= b_max_offset; m++) {
             int i, j;
-            coordinate2(&i, &j, l, b_size);
+            coordinate2(&i, &j, m, b_size, b_sv_idx);
             // Check if current index is a part of the buffer:
-            if (!(i >= 0 && i < b_ij_size && j >= 0 && j < b_ij_size))
+            if (!(i >= 0 && i < b_sv_size && j >= 0 && j < b_sv_size))
                 continue;
 
-            phi1[l] += dt * (phidot1[l] + 0.5f * ker1_curr[l] * dt);
-            phi2[l] += dt * (phidot2[l] + 0.5f * ker2_curr[l] * dt);
+            phi1[m] += dt * (phidot1[m] + 0.5f * ker1_curr[m] * dt);
+            phi2[m] += dt * (phidot2[m] + 0.5f * ker2_curr[m] * dt);
         }
 
         // tau += dt; // Do this only on the root level
@@ -100,15 +154,15 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
-            if (!(i >= 0 && i < b_ij_size && j >= 0 && j < b_ij_size))
+            if (!(i >= 0 && i < b_sv_size && j >= 0 && j < b_sv_size))
                 continue;
 
             data_t lap1 = laplacian2(phi1, i, j, b_size) / pow_2(dx);
             data_t lap2 = laplacian2(phi2, i, j, b_size) / pow_2(dx);
-            // ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
-            // ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
-            ker1_next[l] = lap1 - parameters.lambdaPRS * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
-            ker2_next[l] = lap2 - parameters.lambdaPRS * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
+            // ker1_next[l] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambda * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            // ker2_next[l] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambda * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // prs
+            ker1_next[l] = lap1 - parameters.lambda * phi1[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
+            ker2_next[l] = lap2 - parameters.lambda * phi2[l] * (pow_2(phi1[l]) + pow_2(phi2[l]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f)); // physical
         }
 
         #pragma omp parallel for schedule(static)
@@ -116,7 +170,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
-            if (!(i >= 0 && i < b_ij_size && j >= 0 && j < b_ij_size))
+            if (!(i >= 0 && i < b_sv_size && j >= 0 && j < b_sv_size))
                 continue;
 
             phidot1[l] += 0.5f * (ker1_curr[l] + ker1_next[l]) * dt;
@@ -135,7 +189,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             int i, j;
             coordinate2(&i, &j, l, b_size);
             // Check current index is a part of the buffer:
-            if (!(i >= 0 && i < b_ij_size && j >= 0 && j < b_ij_size))
+            if (!(i >= 0 && i < b_sv_size && j >= 0 && j < b_sv_size))
                 continue;
 
             // Note: don't have to divide gradient by dx^2 for refinement criterion.
@@ -144,6 +198,7 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
 
             flagged[l] = (sqrt(grad_sq1 + grad_sq2) > parameters.refinement_threshold);
         }
+#endif
     }
 
 
@@ -164,8 +219,8 @@ void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_lo
             lap1 = laplacian3(data.phi1, x, y, z, N) / pow_2(dx);
             lap2 = laplacian3(data.phi2, x, y, z, N) / pow_2(dx);
         }
-        data.ker1_next[i] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
-        data.ker2_next[i] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
+        data.ker1_next[i] = lap1 - 1.0f / pow_2(tau_local) * parameters.lambda * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
+        data.ker2_next[i] = lap2 - 1.0f / pow_2(tau_local) * parameters.lambda * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau_local) + pow_2(T_initial) / (3.0f));
     }
 #endif
 #if 0

@@ -7,6 +7,10 @@ typedef struct cluster_t {
     std::vector<vec2i> points;
 } cluster_t;
 
+static inline double gaussian_kernel(int *flagged, int i, int j, int N, int so = 0) {
+    return 0.0f;
+}
+
 /**
  * See question 3.11. from http://www.fftw.org/faq/
  */
@@ -26,23 +30,34 @@ static void shift2D(fftw_complex *arr, int N) {
  * of initial seed points around which we will build clusters. This is done by convolving the binary 'image' with a gaussian
  * filter and locating the peaks in the convolved 'image'.
  * 
+ * TODO: applying a gaussian filter in real space might be faster than the fft? O(N) vs O(NlogN)
+ * 
  * @param ld : "leading dimension" of image data, i.e. the dimension of the buffer.
  * 
- * TODO: applying a gaussian filter in real space might be faster than the fft? O(N) vs O(NlogN)
  */
-static void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int ld, int length) {
+static void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, level_data data, int b_id) {
 
-    // TODO:
+    // buffer size
+    int b_size = data.b_data[b_id].size;
+    // size of solution vector
+    int b_sv_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size; // TODO: hard coded stencil = 2
+    // starting index for solution vector
+    int b_sv_idx = data.b_data[b_id].index_sv;
+    // max offset at which i = j = b_size - stencil - 1 = b_sv_size - 1
+    int b_max_offset = b_sv_idx + (b_sv_size - 1) + b_size * (b_sv_size - 1); // assume 2D for now.
+
+    int *flagged = &data.flagged[data.b_data[b_id].index_global];
 
     // Apply gaussian blur:
-    double *flagged_convolved = (double *) calloc(length, sizeof(double));
+    double *flagged_convolved = (double *) calloc(b_size*b_size, sizeof(double));
 
-    #pragma omp parallel for schedule(static)
-    for (int m = 0; m < length; m++) {
-        int i, j;
-        coordinate2(&i, &j, m, ld);
-        // 3x3 gaussian kernel (assuming 2D of course):
-        flagged_convolved[m] = 0.0f;
+    #pragma omp parallel for schedule(static) collapse(2)
+    for (int i = 0; i < b_sv_size; i++) {
+        for (int j = 0; j < b_sv_size; j++) {
+            int offset = offset2(i, j, b_size, b_sv_idx);
+            // 3x3 gaussian kernel (assuming 2D of course):
+            flagged_convolved[offset] = gaussian_kernel(flagged, i, j, b_size, b_sv_idx);
+        }
     }
 
     // Apply maximum filter and find peaks:
@@ -142,16 +157,20 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
 
     int n_blocks = data.b_data.size();
     for (int b_id = 0; b_id < n_blocks; b_id++) {
+        // buffer size
         int b_size = data.b_data[b_id].size;
-        int b_ij_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size;
-        // offset at which i, j = b_size - stencil - 1 = b_ij_size - 1
-        int b_max_offset = (b_ij_size - 1) + b_size * (b_ij_size - 1); // assume 2D for now.
+        // size of solution vector
+        int b_sv_size = (data.b_data[b_id].has_buffer) ? b_size - 2 : b_size; // TODO: hard coded stencil = 2
+        // starting index for solution vector
+        int b_sv_idx = data.b_data[b_id].index_sv;
+        // max offset at which i = j = b_size - stencil - 1 = b_sv_size - 1
+        int b_max_offset = b_sv_idx + (b_sv_size - 1) + b_size * (b_sv_size - 1); // assume 2D for now.
 
-        int *flagged = &data.flagged[data.b_data[b_id].index];
+        int *flagged = &data.flagged[data.b_data[b_id].index_global];
 
         std::vector<cluster_t> clusters;
 
-        gen_initial_cluster_seeds(clusters, flagged, b_size, b_max_offset + 1);
+        gen_initial_cluster_seeds(clusters, data, b_id);
 
         // Naive k-nearest-neighbour (KNN) solution:
 
@@ -159,12 +178,12 @@ void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &b
 
         #pragma omp declare reduction (merge : std::vector<vec2i> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
-        #pragma omp parallel for reduction(merge: flagged_coords)
-        for (int m = 0; m <= b_max_offset; m++) {
-            if (flagged[m]) {
-                int i, j;
-                coordinate2(&i, &j, m, b_size);
-                flagged_coords.push_back((vec2i) {i, j});
+        #pragma omp parallel for collapse(2) reduction(merge: flagged_coords)
+        for (int i = 0; i < b_sv_size; i++) {
+            for (int j = 0; j < b_sv_size; j++) {
+                int offset = offset2(i, j, b_size, b_sv_idx);
+                if (flagged[offset])
+                    flagged_coords.push_back((vec2i) {i, j});
             }
         }
 

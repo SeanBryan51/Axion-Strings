@@ -2,11 +2,7 @@
 
 FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 
-void fio_read_field_data(char *file_name, data_t *data, int length) {
-
-    char *path = (char *) alloca(sizeof(parameters.output_directory) + sizeof(file_name) + 1);
-    assert(path != NULL);
-    sprintf(path, "%s/%s", parameters.output_directory, file_name);
+void fio_read_field_data(const char *path, data_t *data, int length) {
 
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
@@ -78,7 +74,7 @@ void fio_save_pk(char *file_name, data_t *pk, data_t *ks, int *count, int n_bins
 
     fprintf(fp, "k,pk,n_modes\n");
     for (int i = 0; i < n_bins; i++) {
-        if(count[i]) fprintf(fp, "%e,%e,%d\n", ks[i], pk[i], count[i]);
+        if (count[i] != 0) fprintf(fp, "%e,%e,%d\n", ks[i], pk[i], count[i]);
     }
 
     fclose(fp);

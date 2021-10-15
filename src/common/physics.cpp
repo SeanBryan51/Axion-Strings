@@ -14,7 +14,7 @@ float light_crossing_time;
 void set_physics_variables() {
 
     // Saxion mass in units of f_a: m_saxion = sqrt(lambda) * f_a / f_a
-    m_saxion_initial = sqrtf(parameters.lambdaPRS);
+    m_saxion_initial = sqrtf(parameters.lambda);
 
     // Initial temperature in units of f_a.
     // Note: only need to set T to some value greater than sqrt(3)*(fa)
@@ -22,7 +22,7 @@ void set_physics_variables() {
     T_initial = 4.0f;
 
     // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
-    m_eff_squared = parameters.lambdaPRS * (pow_2(T_initial) / 3.0f - 1.0f);
+    m_eff_squared = parameters.lambda * (pow_2(T_initial) / 3.0f - 1.0f);
 
     // Light crossing time: approximate time for light to travel one Hubble volume,
     // i.e. when H^{-1} ~ L.
@@ -70,5 +70,5 @@ float string_tension() {
  * Effective mass of PQ potential.
  */
 float meff_squared() {
-    return parameters.lambdaPRS * (pow_2(temperature()) / 3.0f - 1.0f);
+    return parameters.lambda * (pow_2(temperature()) / 3.0f - 1.0f);
 }

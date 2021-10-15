@@ -32,7 +32,8 @@ extern struct parameters {
     // User defined parameters to be read from 
     // parameter file:
 
-    float lambdaPRS;
+    float lambda;
+    int   enable_PRS;
     int   NDIMS;
     int   N;
     float space_step;
@@ -82,17 +83,17 @@ inline int get_length() {
 /*
  * Inline function for 2D array indexing:
  */
-inline int offset2(int i, int j, int N) {
-    return periodic(i,N) + N * periodic(j,N);
+inline int offset2(int i, int j, int N, int starting_offset = 0) {
+    return starting_offset + periodic(i,N) + N * periodic(j,N);
 }
 
 /*
  * Inline function that performs the inverse operation of offset2().
  * Returns the (i,j) coordinate corresponding to a given offset.
  */
-inline void coordinate2(int *i, int *j, int offset, int N) {
-    *j = offset / N;
-    *i = offset % N;
+inline void coordinate2(int *i, int *j, int offset, int N, int starting_offset = 0) {
+    *j = (offset - starting_offset) / N;
+    *i = (offset - starting_offset) % N;
 }
 
 /*
@@ -165,7 +166,7 @@ int  mkl_v_rng_gaussian(MKL_INT method, VSLStreamStatePtr stream, MKL_INT n, dat
 extern FILE *fp_main_output, *fp_time_series, *fp_snapshot_timings;
 void fio_open_output_filestreams();
 void fio_close_output_filestreams();
-void fio_read_field_data(char *file_name, data_t *data, int length);
+void fio_read_field_data(const char *path, data_t *data, int length);
 void fio_save_field_data(char *file_name, data_t *data, int length);
 void fio_save_field_data_as_slice(char *file_name, data_t *data, int length, int N);
 void fio_save_strings2(char *file_name, std::vector <vec2i> *v);
