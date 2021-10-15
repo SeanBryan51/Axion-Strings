@@ -2,7 +2,8 @@
 
 % Simulation parameters:
 
-lambdaPRS           1.0             % Value of quartic coupling in PQ potential.
+lambda              1.0             % Value of quartic coupling in PQ potential.
+enable_PRS          1               % Use PRS equation of motion (0 : no, 1 : yes).
 NDIMS               2               % Number of dimensions (2 or 3).
 N                   128             % Number of grid points.
 space_step          1.0             % Space step in dimensionless program units (default space_step=1).
@@ -39,7 +40,7 @@ thr                 1
 
 % AMR settings:
 
-enable_amr           0               % TODO: explain
-init_from_snapshot   0               % TODO: explain
-tau_initial          1.0             % TODO: explain
-refinement_threshold 20.0            % TODO: explain
+enable_amr           0               % Enable adaptive mesh refinement (0 : no, 1 : yes)
+init_from_snapshot   0               % Read initial conditions from snapshot. For now, manually store ic file paths in amr_run.cpp.
+tau_initial          1.0             % Appropriate tau value for initial conditions.
+refinement_threshold 20.0            % Threshold used in refinement criterion.
