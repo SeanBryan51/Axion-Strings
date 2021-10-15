@@ -120,6 +120,12 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
         data_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
         plan = fftw_plan_dft_3d(N, N, N, data, data_k, FFTW_FORWARD, FFTW_ESTIMATE);
 
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            data[m][0] = data_real[m];
+            data[m][1] = (data_imag != NULL) ? data_imag[m] : 0.0f;
+        }
+
         shift3D(data, N);
 
         fftw_execute(plan);
@@ -135,7 +141,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
             int ps_index = floor(kmag) - 1;
             assert(ps_index < n_bins);
 
-            pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]);
+            pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]); 
             ks[ps_index] += kmag;
             count[ps_index]++;
         }
