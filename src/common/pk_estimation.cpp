@@ -81,7 +81,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
             coordinate2(&i, &j, m, N);
 
             data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]));
-            if (kmag == 0.0f || kmag > N/2) continue; // ignore zero mode (field average) and all modes k > N/2
+            if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
 
             int ps_index = floor(kmag) - 1;
             assert(ps_index < n_bins);
@@ -136,7 +136,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
             coordinate3(&i, &j, &k, m, N);
 
             data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]) + pow_2(kz[k]));
-            if (kmag == 0.0f || kmag > N/2) continue; // ignore zero mode (field average) and all modes k > N/2
+            if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
 
             int ps_index = floor(kmag) - 1;
             assert(ps_index < n_bins);
