@@ -2,12 +2,26 @@
 
 #include "common/common.hpp"
 
-// Note: to access elements a[i,j] = a[i + b_size * j] where i, j = 0, 1, ..., b_size - stencil - 1 where stencil will often be 2 when including a buffer.
+#define BUFFER_STENCIL 2
+
+/**
+ * Block specifications for refinement.
+ */
+typedef struct block_specs {
+    vec2i coord;
+    int size;
+} block_specs;
+
+/**
+ * Note: to access elements a[i,j] = a[i + b_size * j] where i, j = 0, 1, ..., b_size - stencil - 1 where stencil will often be 2 when 
+ * including a buffer.
+ */
 typedef struct block_data {
     int index_global; // "global index": index where memory starts for the buffer (including buffers).
     int index_sv;     // "solution vector index": index where the actual solution vector starts in the array. When there is no buffer, index_sv = 0.
     int size;         // "block size": size of square grid (including the buffer), i.e. N.
     int has_buffer;
+    vec2i origin_global; // coordinate of origin in global simulation domain in units of space_step / pow(REFINEMENT_FACTOR, level)
 } block_data;
 
 /**
@@ -19,6 +33,8 @@ typedef struct block_data {
  */
 typedef struct level_data {
     int length; // length of current solution vector
+
+    // TODO: solve unnecessary buffer memory usage in solution vectors
 
     data_t *phi1;       // phi_1 field values
     data_t *phi2;       // phi_2 field values
@@ -74,11 +90,11 @@ inline data_t gradient_squared3(data_t *field, int i, int j, int k, int N) {
 }
 
 // amr_integrate.cpp
-void evolve_level(std::vector<level_data> hierarchy, int level, data_t tau_local);
-void integrate_level(std::vector<level_data> hierarchy, int level, data_t tau_local);
-void regrid(std::vector<level_data> hierarchy, std::vector<vec2i> block_coords, std::vector<int> block_size, int level);
+void evolve_level(std::vector<level_data*> hierarchy, int level, data_t tau_local);
+void integrate_level(std::vector<level_data*> hierarchy, int level, data_t tau_local);
+void regrid(std::vector<level_data*> hierarchy, int level, std::vector<std::vector<block_specs>> b_specs);
 void reflux();
 void average_down();
 
 // amr_point_clustering.cpp
-void gen_refinement_blocks(std::vector<vec2i> &block_coords, std::vector<int> &block_size, std::vector<level_data> hierarchy, int level);
+void gen_refinement_blocks(std::vector<block_specs> &to_refine, int *flagged, block_data b);

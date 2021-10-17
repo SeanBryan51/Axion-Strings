@@ -1,8 +1,8 @@
 #include "amr_internal.hpp"
 #include "amr_interface.hpp"
 
-const char *phi1_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi1";
-const char *phi2_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi2";
+const char *phi1_ic_path    = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi1";
+const char *phi2_ic_path    = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phi2";
 const char *phidot1_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot1";
 const char *phidot2_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot2";
 
@@ -24,10 +24,18 @@ static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
 
 void run_amr() {
 
-    std::vector<level_data> hierarchy;
+    std::vector<level_data *> hierarchy;
     level_data root_level;
     root_level.length = get_length();
-    root_level.b_data = { (block_data) {.index_global = 0, .index_sv = 0, .size = parameters.N, .has_buffer = 0} };
+    root_level.b_data = { (block_data) {
+        .index_global = 0,
+        .index_sv = 0,
+        .size = parameters.N,
+        .has_buffer = 0,
+        .origin_global = {0, 0}
+    } };
+
+    hierarchy = { &root_level };
 
     set_physics_variables();
 
@@ -65,8 +73,6 @@ void run_amr() {
         gaussian_thermal(root_level.phi1, root_level.phi2, root_level.phidot1, root_level.phidot2);
     }
 
-    hierarchy = {root_level};
-
     if (parameters.save_snapshots) {
         fprintf(fp_snapshot_timings, "snapshot,");
         fprintf(fp_snapshot_timings, "tau,");
@@ -78,7 +84,7 @@ void run_amr() {
     int n_snapshots_written = 0;
 
     int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
-    final_step *= 2; // (to observe shrinking of string cores)
+    final_step *= 2; // to observe shrinking of string cores
     for (int tstep = 0; tstep < final_step; tstep++) {
 
         if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
@@ -100,14 +106,22 @@ void run_amr() {
                 fio_save_field_data(fname_phi1, root_level.phi1, root_level.length);
                 fio_save_field_data(fname_phi2, root_level.phi2, root_level.length);
             }
+
 #if 0
+            // debug
             // output flagged points:
             char fname_flagged[50];
             sprintf(fname_flagged, "snapshot%d-flagged", n_snapshots_written);
             fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.length);
 #endif
+
             n_snapshots_written++;
         }
+
+#if 0
+        // debug
+        if (tau > 120.0f) break;
+#endif
 
         evolve_level(hierarchy, 0, tau);
 
@@ -117,43 +131,38 @@ void run_amr() {
     }
 
 #if 0
-    std::vector<vec2i> block_coords;
-    std::vector<int> block_size;
-
-    gen_refinement_blocks(block_coords, block_size, hierarchy, 0);
-
-    assert(block_coords.size() == block_size.size());
-    for (int i = 0; i < block_coords.size(); i++) {
-        printf("(%d, %d),\n", block_coords[i].x, block_coords[i].y);
-        printf("(%d, %d),\n", block_coords[i].x + block_size[i] - 1, block_coords[i].y + block_size[i] - 1);
-        // printf("size = %d\n", block_size[i]);
-    }
-#endif
-
-#if 0
+    // debug
     FILE *fp = fopen("/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/snapshot-flagged", "w");
     assert(fp != NULL);
-    fwrite(root_level.flagged, sizeof(int), root_level.size, fp);
+    fwrite(root_level.flagged, sizeof(int), root_level.length, fp);
     fclose(fp);
 #endif
 
 #if 0
-    fio_save_field_data("snapshot-test-phi1", root_level.phi1, root_level.size);
-    fio_save_field_data("snapshot-test-phi2", root_level.phi2, root_level.size);
+    assert(root_level.b_data.size() == 1);
+
+    std::vector<block_specs> to_refine = {};
+
+    gen_refinement_blocks(to_refine, root_level.flagged, root_level.b_data[0]);
+
+    for (int i = 0; i < to_refine.size(); i++) {
+        printf("[(%d, %d),", to_refine[i].coord.x, to_refine[i].coord.y);
+        printf("(%d, %d)],\n", to_refine[i].coord.x + (to_refine[i].size - 1), to_refine[i].coord.y + (to_refine[i].size - 1));
+    }
 #endif
 
     // Clean up memory:
-    for (level_data level : hierarchy) {
-        free(level.phi1);
-        free(level.phi2);
-        free(level.phidot1);
-        free(level.phidot2);
-        free(level.ker1_curr);
-        free(level.ker2_curr);
-        free(level.ker1_next);
-        free(level.ker2_next);
-        free(level.axion);
-        free(level.saxion);
-        free(level.flagged);
+    for (level_data *level : hierarchy) {
+        free(level->phi1);
+        free(level->phi2);
+        free(level->phidot1);
+        free(level->phidot2);
+        free(level->ker1_curr);
+        free(level->ker2_curr);
+        free(level->ker1_next);
+        free(level->ker2_next);
+        free(level->axion);
+        free(level->saxion);
+        free(level->flagged);
     }
 }
