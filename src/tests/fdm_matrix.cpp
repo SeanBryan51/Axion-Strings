@@ -96,7 +96,7 @@ void test_build_coefficient_matrix() {
                 n_values_read++;
             }
             // printf("%.1f ", val);
-            assert(val == correct_matrix[offset2(i,j,N*N)]);
+            assert(val == correct_matrix[offset2(i,j,N*N,0)]);
         }
         // printf("\n");
     }
@@ -147,7 +147,7 @@ void test_fdm_matrix2D() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // define field values
-            phi[offset2(i,j,N)] = sinf(M_PI / L * i) + cosf(M_PI / L * j);
+            phi[offset2(i,j,N,0)] = sinf(M_PI / L * i) + cosf(M_PI / L * j);
         }
     }
 
@@ -158,7 +158,7 @@ void test_fdm_matrix2D() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // compare discretised laplacian and actual laplacian
-            data_t discretised_laplacian = laplacian[offset2(i,j,N)];
+            data_t discretised_laplacian = laplacian[offset2(i,j,N,0)];
             data_t actual_laplacian = - pow_2(M_PI / L) * (sinf(M_PI / L * i) + cosf(M_PI / L * j));
             assert(is_equal(discretised_laplacian, actual_laplacian, 1e-5f));
         }

@@ -83,7 +83,7 @@ inline int get_length() {
 /*
  * Inline function for 2D array indexing:
  */
-inline int offset2(int i, int j, int N, int starting_offset = 0) {
+inline int offset2(int i, int j, int N, int starting_offset) {
     return starting_offset + periodic(i,N) + N * periodic(j,N);
 }
 
@@ -91,7 +91,7 @@ inline int offset2(int i, int j, int N, int starting_offset = 0) {
  * Inline function that performs the inverse operation of offset2().
  * Returns the (i,j) coordinate corresponding to a given offset.
  */
-inline void coordinate2(int *i, int *j, int offset, int N, int starting_offset = 0) {
+inline void coordinate2(int *i, int *j, int offset, int N, int starting_offset) {
     *j = (offset - starting_offset) / N;
     *i = (offset - starting_offset) % N;
 }

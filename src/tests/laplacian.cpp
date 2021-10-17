@@ -31,7 +31,7 @@ void test_laplacian2D() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             // define field values
-            phi[offset2(i,j,N)] = sinf(M_PI / L * i) + cosf(M_PI / L * j);
+            phi[offset2(i,j,N,0)] = sinf(M_PI / L * i) + cosf(M_PI / L * j);
         }
     }
     for (int i = 0; i < N; i++) {

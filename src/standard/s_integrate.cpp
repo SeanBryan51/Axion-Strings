@@ -36,12 +36,12 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         for (int i = 0; i < length; i++) {
 
             int x, y;
-            coordinate2(&x, &y, i, N);
+            coordinate2(&x, &y, i, N, 0);
 
             // central node:
             assert(nnz < num_bands * length);
             rows[nnz] = i;
-            cols[nnz] = offset2(x,y,N);
+            cols[nnz] = offset2(x,y,N,0);
             values[nnz] = coefficients[stencil_setting][0];
             nnz++;
 
@@ -49,25 +49,25 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
             for (int l = 1; l < coefficients[stencil_setting].size(); l++) {
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x+l,y,N);
+                cols[nnz] = offset2(x+l,y,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x-l,y,N);
+                cols[nnz] = offset2(x-l,y,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x,y+l,N);
+                cols[nnz] = offset2(x,y+l,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x,y-l,N);
+                cols[nnz] = offset2(x,y-l,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
             }
@@ -155,8 +155,8 @@ data_t laplacian2D(data_t *phi, int i, int j, float dx, int N) {
     data_t laplacian;
 
     laplacian = (
-        (phi[offset2(i+1,j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i-1,j,N)])
-      + (phi[offset2(i,j+1,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,j-1,N)])
+        (phi[offset2(i+1,j,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i-1,j,N,0)])
+      + (phi[offset2(i,j+1,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i,j-1,N,0)])
       ) / (pow_2(dx));
 
     return laplacian;

@@ -10,7 +10,7 @@ static void shift2D(fftw_complex *arr, int N) {
     #pragma omp parallel for schedule(static)
     for (int m = 0; m < length; m++) {
         int i, j;
-        coordinate2(&i, &j, m, N);
+        coordinate2(&i, &j, m, N, 0);
         arr[m][0] *= pow(-1.0f, i + j);
         arr[m][1] *= pow(-1.0f, i + j);
     }
@@ -81,7 +81,7 @@ void gaussian_thermal(data_t *phi1, data_t *phi2, data_t *phidot1, data_t *phido
         #pragma omp parallel for schedule(static)
         for (int m = 0; m < length; m++) {
             int i, j;
-            coordinate2(&i, &j, m, N);
+            coordinate2(&i, &j, m, N, 0);
             data_t k = sqrt(kx[i]*kx[i] + ky[j]*ky[j]);
             data_t amplitude, amplitude_dot;
             if (k != 0.0f) {

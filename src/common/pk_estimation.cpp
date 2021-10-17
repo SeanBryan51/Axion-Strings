@@ -10,7 +10,7 @@ static void shift2D(fftw_complex *arr, int N) {
     #pragma omp parallel for schedule(static)
     for (int m = 0; m < length; m++) {
         int i, j;
-        coordinate2(&i, &j, m, N);
+        coordinate2(&i, &j, m, N, 0);
         arr[m][0] *= pow(-1.0f, i + j);
         arr[m][1] *= pow(-1.0f, i + j);
     }
@@ -78,7 +78,7 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
         #pragma omp parallel for schedule(static)
         for (int m = 0; m < length; m++) {
             int i, j;
-            coordinate2(&i, &j, m, N);
+            coordinate2(&i, &j, m, N, 0);
 
             data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]));
             if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2

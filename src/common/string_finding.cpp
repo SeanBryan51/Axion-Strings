@@ -12,12 +12,12 @@ int cores2(data_t *field, std::vector <vec2i> &list) {
     #pragma omp parallel for reduction(merge: list)
     for (int m = 0; m < length; m++) {
         int i, j;
-        coordinate2(&i, &j, m, N);
+        coordinate2(&i, &j, m, N, 0);
 
-        data_t norm1 = (field[offset2(i,j,N)] + M_PI)/(2*M_PI);
-        data_t norm2 = (field[offset2(i+1,j,N)] + M_PI)/(2*M_PI);
-        data_t norm3 = (field[offset2(i+1,j+1,N)] + M_PI)/(2*M_PI);
-        data_t norm4 = (field[offset2(i,j+1,N)] + M_PI)/(2*M_PI);
+        data_t norm1 = (field[offset2(i,j,N,0)] + M_PI)/(2*M_PI);
+        data_t norm2 = (field[offset2(i+1,j,N,0)] + M_PI)/(2*M_PI);
+        data_t norm3 = (field[offset2(i+1,j+1,N,0)] + M_PI)/(2*M_PI);
+        data_t norm4 = (field[offset2(i,j+1,N,0)] + M_PI)/(2*M_PI);
 
         data_t theta1 = std::min(abs(norm2-norm1),1-abs(norm2-norm1));
         data_t theta2 = std::min(abs(norm3-norm2),1-abs(norm3-norm2));
