@@ -75,20 +75,43 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
 
         fftw_execute(plan);
 
-        #pragma omp parallel for schedule(static)
-        for (int m = 0; m < length; m++) {
-            int i, j;
-            coordinate2(&i, &j, m, N, 0);
+        #pragma omp parallel
+        {
+            // Necessary for OpenMP array reduction, see https://stackoverflow.com/questions/20413995/reducing-on-array-in-openmp
 
-            data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]));
-            if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
+            data_t *pk_private = (data_t *) calloc(n_bins, sizeof(data_t)); 
+            data_t *ks_private = (data_t *) calloc(n_bins, sizeof(data_t));
+            int *count_private = (int *) calloc(n_bins, sizeof(int));
+            assert(pk_private != NULL && ks_private != NULL && count_private != NULL);
 
-            int ps_index = floor(kmag) - 1;
-            assert(ps_index < n_bins);
+            #pragma omp for nowait
+            for (int m = 0; m < length; m++) {
+                int i, j;
+                coordinate2(&i, &j, m, N, 0);
 
-            pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]);
-            ks[ps_index] += kmag;
-            count[ps_index]++;
+                data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]));
+                if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
+
+                int ps_index = floor(kmag) - 1;
+                assert(ps_index < n_bins);
+
+                pk_private[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]);
+                ks_private[ps_index] += kmag;
+                count_private[ps_index]++;
+            }
+
+            #pragma omp critical
+            {
+                for(int m = 0; m < n_bins; m++) {
+                    pk[m] += pk_private[m];
+                    ks[m] += ks_private[m];
+                    count[m] += count_private[m];
+                }
+            }
+
+            free(pk_private);
+            free(ks_private);
+            free(count_private);
         }
 
         for (int m = 0; m < n_bins; m++) {
@@ -130,20 +153,43 @@ void output_powerspec(char *file_name, data_t *data_real, data_t *data_imag) {
 
         fftw_execute(plan);
 
-        #pragma omp parallel for schedule(static)
-        for (int m = 0; m < length; m++) {
-            int i, j, k;
-            coordinate3(&i, &j, &k, m, N);
+        #pragma omp parallel
+        {
+            // Necessary for OpenMP array reduction, see https://stackoverflow.com/questions/20413995/reducing-on-array-in-openmp
 
-            data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]) + pow_2(kz[k]));
-            if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
+            data_t *pk_private = (data_t *) calloc(n_bins, sizeof(data_t)); 
+            data_t *ks_private = (data_t *) calloc(n_bins, sizeof(data_t));
+            int *count_private = (int *) calloc(n_bins, sizeof(int));
+            assert(pk_private != NULL && ks_private != NULL && count_private != NULL);
 
-            int ps_index = floor(kmag) - 1;
-            assert(ps_index < n_bins);
+            #pragma omp for nowait
+            for (int m = 0; m < length; m++) {
+                int i, j, k;
+                coordinate3(&i, &j, &k, m, N);
 
-            pk[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]); 
-            ks[ps_index] += kmag;
-            count[ps_index]++;
+                data_t kmag = sqrt(pow_2(kx[i]) + pow_2(ky[j]) + pow_2(kz[k]));
+                if (kmag == 0.0f || kmag >= N/2) continue; // ignore zero mode (field average) and all modes k >= N/2
+
+                int ps_index = floor(kmag) - 1;
+                assert(ps_index < n_bins);
+
+                pk_private[ps_index] += pow_2(data_k[m][0]) + pow_2(data_k[m][1]); 
+                ks_private[ps_index] += kmag;
+                count_private[ps_index]++;
+            }
+
+            #pragma omp critical
+            {
+                for(int m = 0; m < n_bins; m++) {
+                    pk[m] += pk_private[m];
+                    ks[m] += ks_private[m];
+                    count[m] += count_private[m];
+                }
+            }
+
+            free(pk_private);
+            free(ks_private);
+            free(count_private);
         }
 
         for (int m = 0; m < n_bins; m++) {
