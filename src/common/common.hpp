@@ -49,6 +49,7 @@ extern struct parameters {
     char output_directory[MAX_LEN];
     int  save_fields;
     int  save_strings;
+    int  save_pk;
 
     int  sample_time_series;
     int  n_samples;

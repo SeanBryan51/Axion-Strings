@@ -24,6 +24,7 @@ output_directory    /Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-String
 
 save_fields         0               % Save snapshot of fields (phi1, phi2) (0 : no, 1 : yes).
 save_strings        0               % Save snapshot of string plaquettes (0 : no, 1 : yes).
+save_pk             0               % Save snapshot of power spectrum (0 : no, 1 : yes).
 
 % Time-series data:
 

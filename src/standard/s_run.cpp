@@ -196,9 +196,13 @@ void run_standard() {
                 }
             }
 
-            char fname_pk[50];
-            sprintf(fname_pk, "snapshot%d-pk.csv", n_snapshots_written);
-            output_powerspec(fname_pk, data.phi2, NULL);
+            if (parameters.save_pk) {
+
+                char fname_pk[50];
+                sprintf(fname_pk, "snapshot%d-pk.csv", n_snapshots_written);
+                output_powerspec(fname_pk, data.phi2, NULL);
+            }
+
 
             n_snapshots_written++;
         }

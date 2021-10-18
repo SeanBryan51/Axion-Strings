@@ -108,6 +108,11 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = INT;
     n_params++;
 
+    strcpy(p_list[n_params].tag, "save_pk");
+    p_list[n_params].addr = &parameters.save_strings;
+    p_list[n_params].type = INT;
+    n_params++;
+
     strcpy(p_list[n_params].tag, "sample_time_series");
     p_list[n_params].addr = &parameters.sample_time_series;
     p_list[n_params].type = INT;
