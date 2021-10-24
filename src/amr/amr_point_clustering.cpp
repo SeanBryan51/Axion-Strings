@@ -26,8 +26,8 @@ static void shift2D(fftw_complex *arr, int N) {
  * of initial seed points around which we will build clusters. This is done by convolving the binary 'image' with a gaussian
  * filter and locating the peaks in the convolved 'image'.
  * 
- * TODO: applying a gaussian filter in real space might be faster than the fft? O(N) vs O(NlogN)
- * 
+ * TODO: applying a gaussian filter in real space might be faster than the fft? O(N) vs O(NlogN) (this is easy, similar to laplacian computation)
+ * TODO: generate seeds by convolving signature arrays in x and y direction with a gaussian.
  */
 static void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *flagged, int N) {
 
@@ -142,7 +142,7 @@ static void gen_initial_cluster_seeds(std::vector<cluster_t> &clusters, int *fla
 }
 
 
-void gen_refinement_blocks(std::vector<block_specs> &to_refine, int *flagged, block_data b) {
+void gen_refinement_blocks(std::vector<block_spec_t> &to_refine, int *flagged, block_data b) {
 
     int b_sv_size = (b.has_buffer) ? b.size - BUFFER_STENCIL : b.size; // size of solution vector
 
@@ -210,7 +210,7 @@ void gen_refinement_blocks(std::vector<block_specs> &to_refine, int *flagged, bl
         if (max_y == b.size - 1) min_y = max_y - (size - 1);
         vec2i starting_coord = {min_x, min_y};
 
-        to_refine.push_back((block_specs) {.coord = starting_coord, .size = size});
+        to_refine.push_back((block_spec_t) {.coord = starting_coord, .size = size});
     }
 
 }
