@@ -1,27 +1,27 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <omp.h>
-
-#include "standard/interface.h"
-#include "utils/utils.h"
+#include "common/common.hpp"
 
 int main(int argc, char *argv[]) {
 
     if(argc != 2) {
-        printf("Error: usage ./main <ParameterFile>\n");
+        fprintf(stdout, "Error: usage ./main <ParameterFile>\n");
         return EXIT_FAILURE;
     }
 
-    // Initialise global variables defined in parameters.h:
+    // read in parameters defined in common.hpp:
     read_parameter_file(argv[1]);
 
-    printf("Running with %s\n", argv[1]);
+    fio_open_output_filestreams();
+
+    fprintf(fp_main_output, "Running with %s\n", argv[1]);
 
     double start = omp_get_wtime();
 
-    run_standard();
+    if (parameters.enable_amr) run_amr();
+    else run_standard();
 
-    printf("Time taken: %f seconds\n", omp_get_wtime() - start);
+    fprintf(fp_main_output, "Time taken: %f seconds\n", omp_get_wtime() - start);
+
+    fio_close_output_filestreams();
 
     return EXIT_SUCCESS;
 }

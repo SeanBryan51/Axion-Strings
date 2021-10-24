@@ -2,8 +2,9 @@
 
 % Simulation parameters:
 
-lambdaPRS           1.0             % Value of quartic coupling in PQ potential.
-NDIMS               3               % Number of dimensions (2 or 3).
+lambda              1.0             % Value of quartic coupling in PQ potential.
+enable_PRS          1               % Use PRS equation of motion (0 : no, 1 : yes).
+NDIMS               2               % Number of dimensions (2 or 3).
 N                   128             % Number of grid points.
 space_step          1.0             % Space step in dimensionless program units (default space_step=1).
 time_step           0.3             % Time step in dimensionless program units (default 1/3 * space_step).
@@ -21,18 +22,26 @@ save_snapshots      0               % Save snapshots (0 : no, 1 : yes).
 n_snapshots         5               % Number of snapshots.
 output_directory    /Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files % Path to output directory.
 
-save_fields         1               % Save snapshot of fields (phi1, phi2) (0 : no, 1 : yes).
-save_strings        1               % Save snapshot of string plaquettes (0 : no, 1 : yes).
+save_fields         0               % Save snapshot of fields (phi1, phi2) (0 : no, 1 : yes).
+save_strings        0               % Save snapshot of string plaquettes (0 : no, 1 : yes).
+save_pk             0               % Save snapshot of power spectrum (0 : no, 1 : yes).
 
 % Time-series data:
 
-sample_time_series  1               % Output time series data to file specified by ts_output_path (0 : no, 1 : yes).
+sample_time_series  0               % Output time series data to file specified by ts_output_path (0 : no, 1 : yes).
 n_samples           40              % Number of samples in time series.
 ts_output_path      /Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/time-series.csv
 
-sample_strings      1               % Output scaling parameter Xi (string scaling law) (0 : no, 1 : yes).
+sample_strings      0               % Output scaling parameter Xi (string scaling law) (0 : no, 1 : yes).
 sample_background   0               % Output background field values (phi1, phi2, phidot1, phidot2, axion, saxion) (0 : no, 1 : yes).
 
 % String finding settings:
 
 thr                 1
+
+% AMR settings:
+
+enable_amr           0               % Enable adaptive mesh refinement (0 : no, 1 : yes)
+init_from_snapshot   0               % Read initial conditions from snapshot. For now, manually store ic file paths in amr_run.cpp.
+tau_initial          1.0             % Appropriate tau value for initial conditions.
+refinement_threshold 20.0            % Threshold used in refinement criterion.

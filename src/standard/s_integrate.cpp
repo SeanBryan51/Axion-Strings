@@ -1,10 +1,10 @@
-#include "common.h"
+#include "s_internal.hpp"
 
 void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     // stencil coefficients: https://en.wikipedia.org/wiki/Finite_difference_coefficient
     int stencil_setting = parameters.stencil_setting;
-    std::vector<std::vector<dtype>> coefficients = {
+    std::vector<std::vector<data_t>> coefficients = {
         {        -2.0f * NDIMS,      1.0f },                                       // stencil_setting = 0
         {   -5.0f/2.0f * NDIMS, 4.0f/3.0f, -1.0f/12.0f },                          // stencil_setting = 1
         { -49.0f/18.0f * NDIMS, 3.0f/2.0f, -3.0f/20.0f,  1.0f/90.0f },             // stencil_setting = 2
@@ -18,7 +18,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
     MKL_INT nnz;
     MKL_INT *rows;
     MKL_INT *cols;
-    dtype *values;
+    data_t *values;
 
     if (NDIMS == 2) {
 
@@ -27,7 +27,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         nnz = 0;
         rows = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
         cols = (int *) calloc(num_bands * length, sizeof(MKL_INT));
-        values = (dtype *) calloc(num_bands * length, sizeof(dtype));
+        values = (data_t *) calloc(num_bands * length, sizeof(data_t));
 
         assert(rows != NULL && cols != NULL && values != NULL);
 
@@ -36,12 +36,12 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         for (int i = 0; i < length; i++) {
 
             int x, y;
-            coordinate2(&x, &y, i, N);
+            coordinate2(&x, &y, i, N, 0);
 
             // central node:
             assert(nnz < num_bands * length);
             rows[nnz] = i;
-            cols[nnz] = offset2(x,y,N);
+            cols[nnz] = offset2(x,y,N,0);
             values[nnz] = coefficients[stencil_setting][0];
             nnz++;
 
@@ -49,25 +49,25 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
             for (int l = 1; l < coefficients[stencil_setting].size(); l++) {
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x+l,y,N);
+                cols[nnz] = offset2(x+l,y,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x-l,y,N);
+                cols[nnz] = offset2(x-l,y,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x,y+l,N);
+                cols[nnz] = offset2(x,y+l,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
 
                 assert(nnz < num_bands * length);
                 rows[nnz] = i;
-                cols[nnz] = offset2(x,y-l,N);
+                cols[nnz] = offset2(x,y-l,N,0);
                 values[nnz] = coefficients[stencil_setting][l];
                 nnz++;
             }
@@ -82,7 +82,7 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
         nnz = 0;
         rows = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
         cols = (MKL_INT *) calloc(num_bands * length, sizeof(MKL_INT));
-        values = (dtype *) calloc(num_bands * length, sizeof(dtype));
+        values = (data_t *) calloc(num_bands * length, sizeof(data_t));
 
         assert(rows != NULL && cols != NULL && values != NULL);
 
@@ -150,21 +150,21 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
  * Stencil coefficients:
  * https://en.wikipedia.org/wiki/Finite_difference_coefficient
  */
-dtype laplacian2D(dtype *phi, int i, int j, float dx, int N) {
+data_t laplacian2D(data_t *phi, int i, int j, float dx, int N) {
 
-    dtype laplacian;
+    data_t laplacian;
 
     laplacian = (
-        (phi[offset2(i+1,j,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i-1,j,N)])
-      + (phi[offset2(i,j+1,N)] - 2.0f*phi[offset2(i,j,N)] + phi[offset2(i,j-1,N)])
+        (phi[offset2(i+1,j,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i-1,j,N,0)])
+      + (phi[offset2(i,j+1,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i,j-1,N,0)])
       ) / (pow_2(dx));
 
     return laplacian;
 }
 
-dtype laplacian3D(dtype *phi, int i, int j, int k, float dx, int N) {
+data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N) {
 
-    dtype laplacian;
+    data_t laplacian;
 
     laplacian = (
         (phi[offset3(i+1,j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)])
@@ -198,14 +198,14 @@ void vvsl_field_rescaled(all_data data) {
 
     // compute kernels:
 
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, data.ker1_next);
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, data.ker1_next);
 
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, data.ker2_next);
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, data.ker2_next);
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        data.ker1_next[i] += - 1.0f / pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
-        data.ker2_next[i] += - 1.0f / pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
+        data.ker1_next[i] += - 1.0f / pow_2(tau) * parameters.lambda * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
+        data.ker2_next[i] += - 1.0f / pow_2(tau) * parameters.lambda * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - pow_2(tau) + pow_2(T_initial) / (3.0f));
     }
 
     #pragma omp parallel for schedule(static)
@@ -245,14 +245,14 @@ void vvsl_hamiltonian_form(all_data data) {
 
     // compute kernels:
 
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, data.ker1_next);
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, data.ker1_next);
 
-    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / dx, data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, data.ker2_next);
+    mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, pow_2(tau) / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, data.ker2_next);
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
-        data.ker1_next[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
-        data.ker2_next[i] += - pow_2(tau) * parameters.lambdaPRS * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
+        data.ker1_next[i] += - pow_2(tau) * parameters.lambda * data.phi1[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
+        data.ker2_next[i] += - pow_2(tau) * parameters.lambda * data.phi2[i] * (pow_2(data.phi1[i]) + pow_2(data.phi2[i]) - 1.0f + pow_2(T_initial) / (3.0f * pow_2(tau)));
     }
 
     #pragma omp parallel for schedule(static)

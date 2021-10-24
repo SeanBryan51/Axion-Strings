@@ -1,5 +1,5 @@
-#include "common.h"
-#include "interface.h"
+#include "s_internal.hpp"
+#include "s_interface.hpp"
 
 static void debug(all_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
@@ -28,8 +28,6 @@ void run_standard() {
     all_data data;
     int length = get_length();
 
-    open_output_filestreams();
-
     // Sanity check on input parameters:
     assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
     assert(parameters.NDIMS == 2 || parameters.NDIMS == 3);
@@ -39,14 +37,14 @@ void run_standard() {
     set_physics_variables();
 
     // Allocate fields on the heap:
-    data.phi1      = (dtype *) calloc(length, sizeof(dtype));
-    data.phi2      = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot1   = (dtype *) calloc(length, sizeof(dtype));
-    data.phidot2   = (dtype *) calloc(length, sizeof(dtype));
-    data.ker1_curr = (dtype *) calloc(length, sizeof(dtype));
-    data.ker2_curr = (dtype *) calloc(length, sizeof(dtype));
-    data.ker1_next = (dtype *) calloc(length, sizeof(dtype));
-    data.ker2_next = (dtype *) calloc(length, sizeof(dtype));
+    data.phi1      = (data_t *) calloc(length, sizeof(data_t));
+    data.phi2      = (data_t *) calloc(length, sizeof(data_t));
+    data.phidot1   = (data_t *) calloc(length, sizeof(data_t));
+    data.phidot2   = (data_t *) calloc(length, sizeof(data_t));
+    data.ker1_curr = (data_t *) calloc(length, sizeof(data_t));
+    data.ker2_curr = (data_t *) calloc(length, sizeof(data_t));
+    data.ker1_next = (data_t *) calloc(length, sizeof(data_t));
+    data.ker2_next = (data_t *) calloc(length, sizeof(data_t));
     data.axion = NULL;
     data.saxion = NULL;
 
@@ -55,7 +53,7 @@ void run_standard() {
     assert(data.ker1_curr != NULL && data.ker2_curr != NULL && data.ker1_next != NULL && data.ker2_next != NULL);
 
     if ((parameters.save_snapshots && parameters.save_strings) || (parameters.sample_time_series && parameters.sample_strings)) {
-        data.axion = (dtype *) calloc(length, sizeof(dtype));
+        data.axion = (data_t *) calloc(length, sizeof(data_t));
         assert(data.axion != NULL);
     }
 
@@ -132,7 +130,7 @@ void run_standard() {
             }
 
             if (parameters.sample_background) {
-                dtype phi1_bar, phi2_bar, phidot1_bar, phidot2_bar, axion_bar, saxion_bar;
+                data_t phi1_bar, phi2_bar, phidot1_bar, phidot2_bar, axion_bar, saxion_bar;
                 phi1_bar = phi2_bar = phidot1_bar = phidot2_bar = axion_bar = saxion_bar = 0.0f;
 
                 #pragma omp parallel for schedule(static) reduction(+:phi1_bar,phi2_bar,phidot1_bar,phidot2_bar,axion_bar,saxion_bar)
@@ -159,7 +157,7 @@ void run_standard() {
             fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
             fprintf(fp_snapshot_timings, "%f,", tau);
             fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
-            fprintf(fp_snapshot_timings, "%f,", (parameters.lambdaPRS != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambda != 0.0f) ? string_tension() : 0.0f);
             fprintf(fp_snapshot_timings, "\n");
 
             if (parameters.save_fields) {
@@ -168,8 +166,15 @@ void run_standard() {
                 sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
                 sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
 
-                save_data(fname_phi1, data.phi1, length);
-                save_data(fname_phi2, data.phi2, length);
+                if (parameters.NDIMS == 2) {
+                    fio_save_field_data(fname_phi1, data.phi1, length);
+                    fio_save_field_data(fname_phi2, data.phi2, length);
+                }
+
+                if (parameters.NDIMS == 3) {
+                    fio_save_field_data_as_slice(fname_phi1, data.phi1, length, parameters.N);
+                    fio_save_field_data_as_slice(fname_phi2, data.phi2, length, parameters.N);
+                }
             }
 
             if (parameters.save_strings) {
@@ -183,13 +188,21 @@ void run_standard() {
                 if (parameters.NDIMS == 2) {
                     std::vector <vec2i> s;
                     cores2(data.axion, s);
-                    save_strings2(fname_strings, &s);
+                    fio_save_strings2(fname_strings, &s);
                 } else {
                     std::vector <vec3i> s;
                     cores3(data.axion, s);
-                    save_strings3(fname_strings, &s);
+                    fio_save_strings3(fname_strings, &s);
                 }
             }
+
+            if (parameters.save_pk) {
+
+                char fname_pk[50];
+                sprintf(fname_pk, "snapshot%d-pk.csv", n_snapshots_written);
+                output_powerspec(fname_pk, data.phi2, NULL);
+            }
+
 
             n_snapshots_written++;
         }
@@ -213,6 +226,4 @@ void run_standard() {
     free(data.axion);
     free(data.saxion);
     mkl_sparse_destroy(data.coefficient_matrix);
-
-    close_output_filestreams();
 }

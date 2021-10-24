@@ -3,13 +3,12 @@
 #include <string.h>
 #include <assert.h>
 
-#include "utils.h"
-#include "../parameters.h"
+#include "common.hpp"
 
 #define MAX_TAGS 300
 #define MAX_LINE_WIDTH 200
 
-struct _parameters parameters;
+struct parameters parameters;
 
 typedef enum Type {
     DOUBLE,
@@ -34,9 +33,14 @@ static int parameters_to_read(Parameter *p_list) {
 
     // Add additional parameters here:
 
-    strcpy(p_list[n_params].tag, "lambdaPRS");
-    p_list[n_params].addr = &parameters.lambdaPRS;
+    strcpy(p_list[n_params].tag, "lambda");
+    p_list[n_params].addr = &parameters.lambda;
     p_list[n_params].type = FLOAT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "enable_PRS");
+    p_list[n_params].addr = &parameters.enable_PRS;
+    p_list[n_params].type = INT;
     n_params++;
 
     strcpy(p_list[n_params].tag, "NDIMS");
@@ -104,6 +108,11 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = INT;
     n_params++;
 
+    strcpy(p_list[n_params].tag, "save_pk");
+    p_list[n_params].addr = &parameters.save_strings;
+    p_list[n_params].type = INT;
+    n_params++;
+
     strcpy(p_list[n_params].tag, "sample_time_series");
     p_list[n_params].addr = &parameters.sample_time_series;
     p_list[n_params].type = INT;
@@ -133,6 +142,27 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].addr = &parameters.thr;
     p_list[n_params].type = INT;
     n_params++;
+
+    strcpy(p_list[n_params].tag, "enable_amr");
+    p_list[n_params].addr = &parameters.enable_amr;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "init_from_snapshot");
+    p_list[n_params].addr = &parameters.init_from_snapshot;
+    p_list[n_params].type = INT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "tau_initial");
+    p_list[n_params].addr = &parameters.tau_initial;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
+    strcpy(p_list[n_params].tag, "refinement_threshold");
+    p_list[n_params].addr = &parameters.refinement_threshold;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
     return n_params;
 }
 
