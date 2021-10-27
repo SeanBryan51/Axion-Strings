@@ -6,6 +6,8 @@ const char *phi2_ic_path    = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/A
 const char *phidot1_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot1";
 const char *phidot2_ic_path = "/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/4-strings-ic-2DN128-TAU64/snapshot-final-phidot2";
 
+static level_data *create_test_level(level_data *root_level);
+
 static void debug(level_data data, int length, int tstep) {
     for (int i = 0; i < length; i++) {
         if (isnan(data.phi1[i]) || isnan(data.phi2[i])) {
@@ -20,6 +22,166 @@ static int should_save_snapshot(int tstep, int n_snapshots, int final_tstep) {
     if (!parameters.save_snapshots) return 0;
     // TODO: temporary solution
     return tstep == 0 || tstep % (final_tstep / (n_snapshots - 1)) == 0;
+}
+
+void run_amr() {
+
+    std::vector<level_data *> hierarchy;
+    level_data *root_level = (level_data *) calloc(1, sizeof(level_data));
+    root_level->length = get_length();
+    root_level->tau_int = 0;
+    root_level->b_data = { (block_data) {
+        .index_global = 0,
+        .index_sv = 0,
+        .size = parameters.N,
+        .has_buffer = 0,
+        .origin_global = {0, 0}
+    } };
+
+    hierarchy = { root_level };
+
+    set_physics_variables();
+
+    // Sanity check on input parameters:
+    assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
+    assert(parameters.NDIMS == 2);
+
+    root_level->phi1      = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->phi2      = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->phidot1   = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->phidot2   = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->ker1_curr = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->ker2_curr = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->ker1_next = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->ker2_next = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->axion = NULL;
+    root_level->saxion = NULL;
+
+    assert(root_level->phi1 != NULL && root_level->phi2 != NULL && root_level->phidot1 != NULL && root_level->phidot2 != NULL);
+    assert(root_level->ker1_curr != NULL && root_level->ker2_curr != NULL && root_level->ker1_next != NULL && root_level->ker2_next != NULL);
+
+    root_level->flagged = (int *) calloc(root_level->length, sizeof(int));
+
+    assert(root_level->flagged != NULL);
+
+    root_level->phi1_prev = (data_t *) calloc(root_level->length, sizeof(data_t));
+    root_level->phi2_prev = (data_t *) calloc(root_level->length, sizeof(data_t));
+
+    assert(root_level->phi1_prev != NULL && root_level->phi2_prev != NULL);
+
+    // Set initial field values:
+    if (parameters.init_from_snapshot) {
+        fio_read_field_data(phi1_ic_path, root_level->phi1, root_level->length);
+        fio_read_field_data(phi2_ic_path, root_level->phi2, root_level->length);
+        fio_read_field_data(phidot1_ic_path, root_level->phidot1, root_level->length);
+        fio_read_field_data(phidot2_ic_path, root_level->phidot2, root_level->length);
+        tau = parameters.tau_initial;
+        if (!parameters.enable_PRS) parameters.lambda /= pow_2(tau); // Need to adjust value of quartic coupling for physical simulation.
+    } else {
+        gaussian_thermal(root_level->phi1, root_level->phi2, root_level->phidot1, root_level->phidot2);
+    }
+
+    // test:
+    // level_data *new_level = create_test_level(root_level);
+    // hierarchy.push_back(new_level);
+
+    if (parameters.save_snapshots) {
+        fprintf(fp_snapshot_timings, "snapshot,");
+        fprintf(fp_snapshot_timings, "tau,");
+        fprintf(fp_snapshot_timings, "hubble_scale,");
+        fprintf(fp_snapshot_timings, "string_tension,");
+        fprintf(fp_snapshot_timings, "\n");
+    }
+
+    int n_snapshots_written = 0;
+
+    int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
+    // final_step *= 2; // to observe shrinking of string cores
+    for (int tstep = 0; tstep < final_step; tstep++) {
+
+        if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
+            fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
+
+            // output snapshot timings:
+            fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
+            fprintf(fp_snapshot_timings, "%f,", tau);
+            fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
+            fprintf(fp_snapshot_timings, "%f,", (parameters.lambda != 0.0f) ? string_tension() : 0.0f);
+            fprintf(fp_snapshot_timings, "\n");
+
+            printf("tau_int = %d\n", root_level->tau_int);
+            if (parameters.save_fields) {
+
+                char fname_phi1[50], fname_phi2[50];
+                sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
+                sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
+
+                fio_save_field_data(fname_phi1, root_level->phi1, root_level->length);
+                fio_save_field_data(fname_phi2, root_level->phi2, root_level->length);
+                // fio_save_field_data(fname_phi1, new_level->phi1, new_level->length);
+                // fio_save_field_data(fname_phi2, new_level->phi2, new_level->length);
+            }
+
+#if 0
+            // debug
+            // output flagged points:
+            char fname_flagged[50];
+            sprintf(fname_flagged, "snapshot%d-flagged", n_snapshots_written);
+            fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.length);
+#endif
+
+            n_snapshots_written++;
+        }
+
+#if 0
+        // debug
+        if (n_snapshots_written > 4) break;
+#endif
+
+        evolve_level(hierarchy, 0);
+        root_level->tau_int += 1;
+
+        tau += parameters.time_step;
+
+        debug(*root_level, root_level->length, tstep);
+    }
+
+#if 0
+    // debug
+    FILE *fp = fopen("/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/snapshot-flagged", "w");
+    assert(fp != NULL);
+    fwrite(root_level.flagged, sizeof(int), root_level.length, fp);
+    fclose(fp);
+#endif
+
+#if 0
+    assert(root_level.b_data.size() == 1);
+
+    std::vector<block_spec_t> to_refine = {};
+
+    gen_refinement_blocks(to_refine, root_level.flagged, root_level.b_data[0]);
+
+    for (int i = 0; i < to_refine.size(); i++) {
+        printf("[(%d, %d),", to_refine[i].coord.x, to_refine[i].coord.y);
+        printf("(%d, %d)],\n", to_refine[i].coord.x + (to_refine[i].size - 1), to_refine[i].coord.y + (to_refine[i].size - 1));
+    }
+#endif
+
+    // Clean up memory:
+    for (level_data *data : hierarchy) {
+        free(data->phi1);
+        free(data->phi2);
+        free(data->phidot1);
+        free(data->phidot2);
+        free(data->ker1_curr);
+        free(data->ker2_curr);
+        free(data->ker1_next);
+        free(data->ker2_next);
+        free(data->axion);
+        free(data->saxion);
+        free(data->flagged);
+        free(data);
+    }
 }
 
 static level_data *create_test_level(level_data *root_level) {
@@ -84,163 +246,4 @@ static level_data *create_test_level(level_data *root_level) {
     }
 
     return ret;
-}
-
-void run_amr() {
-
-    std::vector<level_data *> hierarchy;
-    level_data *root_level = (level_data *) calloc(1, sizeof(level_data));
-    root_level->length = get_length();
-    root_level->tau_int = 0;
-    root_level->b_data = { (block_data) {
-        .index_global = 0,
-        .index_sv = 0,
-        .size = parameters.N,
-        .has_buffer = 0,
-        .origin_global = {0, 0}
-    } };
-
-    hierarchy = { root_level };
-
-    set_physics_variables();
-
-    // Sanity check on input parameters:
-    assert(parameters.N % 2 == 0); // Number of grid points should always be some power of 2.
-    assert(parameters.NDIMS == 2);
-
-    root_level->phi1      = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->phi2      = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->phidot1   = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->phidot2   = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->ker1_curr = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->ker2_curr = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->ker1_next = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->ker2_next = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->axion = NULL;
-    root_level->saxion = NULL;
-
-    assert(root_level->phi1 != NULL && root_level->phi2 != NULL && root_level->phidot1 != NULL && root_level->phidot2 != NULL);
-    assert(root_level->ker1_curr != NULL && root_level->ker2_curr != NULL && root_level->ker1_next != NULL && root_level->ker2_next != NULL);
-
-    root_level->flagged = (int *) calloc(root_level->length, sizeof(int));
-
-    assert(root_level->flagged != NULL);
-
-    root_level->phi1_prev = (data_t *) calloc(root_level->length, sizeof(data_t));
-    root_level->phi2_prev = (data_t *) calloc(root_level->length, sizeof(data_t));
-
-    assert(root_level->phi1_prev != NULL && root_level->phi2_prev != NULL);
-
-    // Set initial field values:
-    if (parameters.init_from_snapshot) {
-        fio_read_field_data(phi1_ic_path, root_level->phi1, root_level->length);
-        fio_read_field_data(phi2_ic_path, root_level->phi2, root_level->length);
-        fio_read_field_data(phidot1_ic_path, root_level->phidot1, root_level->length);
-        fio_read_field_data(phidot2_ic_path, root_level->phidot2, root_level->length);
-        tau = parameters.tau_initial;
-        if (!parameters.enable_PRS) parameters.lambda /= pow_2(tau); // Need to adjust value of quartic coupling for physical simulation.
-    } else {
-        gaussian_thermal(root_level->phi1, root_level->phi2, root_level->phidot1, root_level->phidot2);
-    }
-
-    level_data *new_level = create_test_level(root_level);
-    hierarchy.push_back(new_level);
-
-    if (parameters.save_snapshots) {
-        fprintf(fp_snapshot_timings, "snapshot,");
-        fprintf(fp_snapshot_timings, "tau,");
-        fprintf(fp_snapshot_timings, "hubble_scale,");
-        fprintf(fp_snapshot_timings, "string_tension,");
-        fprintf(fp_snapshot_timings, "\n");
-    }
-
-    int n_snapshots_written = 0;
-
-    int final_step = round(light_crossing_time / parameters.time_step) - round(parameters.space_step / parameters.time_step) + 1;
-    // final_step *= 2; // to observe shrinking of string cores
-    for (int tstep = 0; tstep < final_step; tstep++) {
-
-        if (should_save_snapshot(tstep, parameters.n_snapshots, final_step)) {
-            fprintf(fp_main_output, "Writing snapshot %d:\n", n_snapshots_written);
-
-            // output snapshot timings:
-            fprintf(fp_snapshot_timings, "%d,", n_snapshots_written);
-            fprintf(fp_snapshot_timings, "%f,", tau);
-            fprintf(fp_snapshot_timings, "%f,", 1.0f / hubble_parameter());
-            fprintf(fp_snapshot_timings, "%f,", (parameters.lambda != 0.0f) ? string_tension() : 0.0f);
-            fprintf(fp_snapshot_timings, "\n");
-
-            printf("tau_int = %d\n", root_level->tau_int);
-            if (parameters.save_fields) {
-
-                char fname_phi1[50], fname_phi2[50];
-                sprintf(fname_phi1, "snapshot%d-phi1", n_snapshots_written);
-                sprintf(fname_phi2, "snapshot%d-phi2", n_snapshots_written);
-
-                // fio_save_field_data(fname_phi1, root_level->phi1, root_level->length);
-                // fio_save_field_data(fname_phi2, root_level->phi2, root_level->length);
-                fio_save_field_data(fname_phi1, new_level->phi1, new_level->length);
-                fio_save_field_data(fname_phi2, new_level->phi2, new_level->length);
-            }
-
-#if 0
-            // debug
-            // output flagged points:
-            char fname_flagged[50];
-            sprintf(fname_flagged, "snapshot%d-flagged", n_snapshots_written);
-            fio_save_flagged_data(fname_flagged, root_level.flagged, root_level.length);
-#endif
-
-            n_snapshots_written++;
-        }
-
-#if 0
-        // debug
-        if (n_snapshots_written > 4) break;
-#endif
-
-        evolve_level(hierarchy, 0);
-        root_level->tau_int += 1;
-
-        tau += parameters.time_step;
-
-        debug(*root_level, root_level->length, tstep);
-    }
-
-#if 0
-    // debug
-    FILE *fp = fopen("/Users/seanbryan/Documents/UNI/2021T1-2/Project/Axion-Strings/output_files/snapshot-flagged", "w");
-    assert(fp != NULL);
-    fwrite(root_level.flagged, sizeof(int), root_level.length, fp);
-    fclose(fp);
-#endif
-
-#if 0
-    assert(root_level.b_data.size() == 1);
-
-    std::vector<block_spec_t> to_refine = {};
-
-    gen_refinement_blocks(to_refine, root_level.flagged, root_level.b_data[0]);
-
-    for (int i = 0; i < to_refine.size(); i++) {
-        printf("[(%d, %d),", to_refine[i].coord.x, to_refine[i].coord.y);
-        printf("(%d, %d)],\n", to_refine[i].coord.x + (to_refine[i].size - 1), to_refine[i].coord.y + (to_refine[i].size - 1));
-    }
-#endif
-
-    // Clean up memory:
-    for (level_data *data : hierarchy) {
-        free(data->phi1);
-        free(data->phi2);
-        free(data->phidot1);
-        free(data->phidot2);
-        free(data->ker1_curr);
-        free(data->ker2_curr);
-        free(data->ker1_next);
-        free(data->ker2_next);
-        free(data->axion);
-        free(data->saxion);
-        free(data->flagged);
-        free(data);
-    }
 }

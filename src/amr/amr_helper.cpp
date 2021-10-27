@@ -168,5 +168,21 @@ void average_down(std::vector<level_data*> hierarchy, int level) {
 }
 
 void regrid(std::vector<level_data*> hierarchy, int level, std::vector<std::vector<block_spec_t>> b_specs) {
+
     // TODO: implement regridding
+
+/*
+    if refinement specifications lie inside existing blocks, do nothing.
+    else if:
+        1) refinement specifications lie outside existing blocks, or there are no refinement specs at all:
+        - tear down hierarchy from current level and build new blocks.
+        - this will occur for example when strings annihilate.
+        2) refinement specs overlap existing blocks:
+        - build new blocks and interpolate values from the hierarchy (including the overlapping grid)
+        - recursive strategy?
+
+
+
+
+*/
 }
