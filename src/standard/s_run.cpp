@@ -72,6 +72,7 @@ void run_standard() {
         fprintf(fp_time_series, "time,");
         fprintf(fp_time_series, "scalefactor,");
         if (parameters.sample_strings) fprintf(fp_time_series, "xi,");
+        if (parameters.sample_strings) fprintf(fp_time_series, "n_plaquettes,");
         if (parameters.sample_background) fprintf(fp_time_series, "phi1_bar,phi2_bar,phidot1_bar,phidot2_bar,axion_bar,saxion_bar");
         fprintf(fp_time_series, "\n");
     }
@@ -112,6 +113,7 @@ void run_standard() {
                     float physical_area = pow_2(parameters.N * parameters.space_step * a);
                     float xi = num_cores * pow_2(t_phys) / physical_area;
                     fprintf(fp_time_series, ",%f", xi);
+                    fprintf(fp_time_series, ",%d", n_plaquettes);
 
                 } else {
                     // 3-dimensions:
@@ -126,6 +128,7 @@ void run_standard() {
                     float physical_volume = pow_3(parameters.N * parameters.space_step * a);
                     float xi = physical_length * pow_2(t_phys) / physical_volume;
                     fprintf(fp_time_series, ",%f", xi);
+                    fprintf(fp_time_series, ",%d", n_plaquettes);
                 }
             }
 
@@ -139,7 +142,7 @@ void run_standard() {
                     phi2_bar += data.phi2[i];
                     phidot1_bar += data.phidot1[i];
                     phidot2_bar += data.phidot2[i];
-                    axion_bar += atan2(data.phi1[i], data.phi2[i]);
+                    axion_bar += abs(atan2(data.phi1[i], data.phi2[i]));
                     saxion_bar += sqrt(pow_2(data.phi1[i]) + pow_2(data.phi2[i]));
                 }
 
