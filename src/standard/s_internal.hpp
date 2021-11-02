@@ -20,6 +20,20 @@ typedef struct _all_data {
 
 } all_data;
 
+/**
+ * Stencil coefficients: https://en.wikipedia.org/wiki/Finite_difference_coefficient
+ */
+inline data_t laplacian2D(data_t *phi, int i, int j, float dx, int N) {
+    return (phi[offset2(i+1,j,N,0)] + phi[offset2(i,j+1,N,0)] - 4.0f*phi[offset2(i,j,N,0)] + phi[offset2(i-1,j,N,0)] + phi[offset2(i,j-1,N,0)]) / (pow_2(dx));
+}
+
+/**
+ * Stencil coefficients: https://en.wikipedia.org/wiki/Finite_difference_coefficient
+ */
+inline data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N) {
+    return (phi[offset3(i+1,j,k,N)] + phi[offset3(i,j+1,k,N)] + phi[offset3(i,j,k+1,N)] - 6.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)] + phi[offset3(i,j-1,k,N)] + phi[offset3(i,j,k-1,N)]) / pow_2(dx);
+}
+
 // s_integrate.cpp
 void  build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N);
 data_t laplacian2D(data_t *phi, int i, int j, float dx, int N);

@@ -1,5 +1,7 @@
 #include "s_internal.hpp"
 
+#include <fftw3.h>
+
 void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 
     // stencil coefficients: https://en.wikipedia.org/wiki/Finite_difference_coefficient
@@ -147,32 +149,150 @@ void build_coefficient_matrix(sparse_matrix_t *handle, int NDIMS, int N) {
 }
 
 /*
- * Stencil coefficients:
- * https://en.wikipedia.org/wiki/Finite_difference_coefficient
+ * See question 3.11. from http://www.fftw.org/faq/
  */
-data_t laplacian2D(data_t *phi, int i, int j, float dx, int N) {
-
-    data_t laplacian;
-
-    laplacian = (
-        (phi[offset2(i+1,j,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i-1,j,N,0)])
-      + (phi[offset2(i,j+1,N,0)] - 2.0f*phi[offset2(i,j,N,0)] + phi[offset2(i,j-1,N,0)])
-      ) / (pow_2(dx));
-
-    return laplacian;
+static void shift2D(fftw_complex *arr, int N) {
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j;
+        coordinate2(&i, &j, m, N, 0);
+        arr[m][0] *= pow(-1.0f, i + j);
+        arr[m][1] *= pow(-1.0f, i + j);
+    }
 }
 
-data_t laplacian3D(data_t *phi, int i, int j, int k, float dx, int N) {
+/*
+ * See question 3.11. from http://www.fftw.org/faq/
+ */
+static void shift3D(fftw_complex *arr, int N) {
+    int length = get_length();
+    #pragma omp parallel for schedule(static)
+    for (int m = 0; m < length; m++) {
+        int i, j, k;
+        coordinate3(&i, &j, &k, m, N);
+        arr[m][0] *= pow(-1.0f, i + j + k);
+        arr[m][1] *= pow(-1.0f, i + j + k);
+    }
+}
 
-    data_t laplacian;
+void compute_laplacian_fft(data_t *ret, data_t *field) {
 
-    laplacian = (
-        (phi[offset3(i+1,j,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i-1,j,k,N)])
-      + (phi[offset3(i,j+1,k,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j-1,k,N)])
-      + (phi[offset3(i,j,k+1,N)] - 2.0f*phi[offset3(i,j,k,N)] + phi[offset3(i,j,k-1,N)])
-      )/pow_2(dx);
+    int N = parameters.N;
+    int NDIMS = parameters.NDIMS;
+    float L = N * parameters.space_step;
 
-    return laplacian;
+    int length = get_length();
+
+    fftw_plan_with_nthreads(omp_get_max_threads());
+
+    if (NDIMS == 2) {
+
+        data_t *kx = (data_t *) calloc(N, sizeof(data_t));
+        data_t *ky = (data_t *) calloc(N, sizeof(data_t));
+        assert(kx != NULL && ky != NULL);
+
+        for (int i = 0; i < N; i++) kx[i] = ky[i] = (- N / 2.0f + i) * 2.0f * M_PI / L;
+
+        fftw_complex *data, *data_k;
+        fftw_plan plan_forward, plan_backward;
+
+        data   = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        data_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        plan_forward = fftw_plan_dft_2d(N, N, data, data_k, FFTW_FORWARD, FFTW_ESTIMATE);
+        plan_backward = fftw_plan_dft_2d(N, N, data_k, data, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            data[m][0] = field[m];
+            data[m][1] = 0.0f;
+        }
+
+        shift2D(data, N);
+
+        fftw_execute(plan_forward);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            int i, j;
+            coordinate2(&i, &j, m, N, 0);
+            data_t k_sq = kx[i]*kx[i] + ky[j]*ky[j];
+            data_k[m][0] *= -k_sq;
+            data_k[m][1] *= -k_sq;
+        }
+
+        // shift2D(data_k, N);
+
+        fftw_execute(plan_backward);
+
+        shift2D(data, N);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            ret[m] = data[m][0] / length;
+        }
+
+        fftw_destroy_plan(plan_forward);
+        fftw_destroy_plan(plan_backward);
+        fftw_free(data);
+        fftw_free(data_k);
+        free(kx);
+        free(ky);
+
+    } else if (NDIMS == 3) {
+
+        data_t *kx = (data_t *) calloc(N, sizeof(data_t));
+        data_t *ky = (data_t *) calloc(N, sizeof(data_t));
+        data_t *kz = (data_t *) calloc(N, sizeof(data_t));
+        assert(kx != NULL && ky != NULL && kz != NULL);
+
+        for (int i = 0; i < N; i++) kx[i] = ky[i] = kz[i] = (- N / 2.0f + i) * 2.0f * M_PI / L;
+
+        fftw_complex *data, *data_k;
+        fftw_plan plan_forward, plan_backward;
+
+        data   = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        data_k = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * length);
+        plan_forward = fftw_plan_dft_3d(N, N, N, data, data_k, FFTW_FORWARD, FFTW_ESTIMATE);
+        plan_backward = fftw_plan_dft_3d(N, N, N, data_k, data, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            data[m][0] = field[m];
+            data[m][1] = 0.0f;
+        }
+
+        shift3D(data, N);
+
+        fftw_execute(plan_forward);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            int i, j, k;
+            coordinate3(&i, &j, &k, m, N);
+            data_t k_sq = kx[i]*kx[i] + ky[j]*ky[j] + kz[k]*kz[k];
+            data_k[m][0] *= -k_sq;
+            data_k[m][1] *= -k_sq;
+        }
+
+        // shift3D(data_k, N);
+
+        fftw_execute(plan_backward);
+
+        shift3D(data, N);
+
+        #pragma omp parallel for schedule(static)
+        for (int m = 0; m < length; m++) {
+            ret[m] = data[m][0] / length;
+        }
+
+        fftw_destroy_plan(plan_forward);
+        fftw_destroy_plan(plan_backward);
+        fftw_free(data);
+        fftw_free(data_k);
+        free(kx);
+        free(ky);
+    }
 }
 
 /*
@@ -198,9 +318,15 @@ void vvsl_field_rescaled(all_data data) {
 
     // compute kernels:
 
+#if 1
     mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi1, 0.0f, data.ker1_next);
 
     mkl_wrapper_sparse_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f / pow_2(dx), data.coefficient_matrix, (matrix_descr) { SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_UPPER, SPARSE_DIAG_NON_UNIT }, data.phi2, 0.0f, data.ker2_next);
+# else
+    compute_laplacian_fft(data.ker1_next, data.phi1);
+
+    compute_laplacian_fft(data.ker2_next, data.phi2);
+#endif
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < length; i++) {
