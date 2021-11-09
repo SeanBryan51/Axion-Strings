@@ -5,7 +5,7 @@ int cores2(data_t *field, std::vector <vec2i> &list) {
     int N = parameters.N;
     int length = get_length();
     int thr = parameters.thr;
-    data_t accept = 0.5f - 0.5f*thr/100;
+    data_t accept = 0.5f * (1.0f - thr/100.0f);
 
     #pragma omp declare reduction (merge : std::vector<vec2i> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
@@ -37,7 +37,7 @@ int cores3(data_t *field, std::vector <vec3i> &list) {
     int N = parameters.N;
     int length = get_length();
     int thr = parameters.thr;
-    data_t accept = 0.5f - 0.5f*thr/100.0f;
+    data_t accept = 0.5f * (1.0f - thr/100.0f);
 
     #pragma omp declare reduction (merge : std::vector<vec3i> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
@@ -77,7 +77,7 @@ int cores3(data_t *field, std::vector <vec3i> &list) {
         data_t theta_sum_b = theta1b + theta2b + theta3b;
         data_t theta_sum_c = theta1c + theta2c + theta3c;
 
-        if (theta_sum_a > accept|| theta_sum_b > accept|| theta_sum_c > accept) {
+        if (theta_sum_a > accept || theta_sum_b > accept || theta_sum_c > accept) {
             list.push_back((vec3i) {i,j,k});
         }
     }
