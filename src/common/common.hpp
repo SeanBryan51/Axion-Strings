@@ -34,6 +34,7 @@ extern struct parameters {
 
     float lambda;
     int   enable_PRS;
+    float T_initial;
     int   NDIMS;
     int   N;
     float space_step;

@@ -4,6 +4,8 @@
 
 lambda              1.0             % Value of quartic coupling in PQ potential.
 enable_PRS          1               % Use PRS equation of motion (0 : no, 1 : yes).
+T_initial           4.0             % Initial temperature in units of f_a. Note: only need to set T_initial to
+                                    % some value greater than sqrt(3) to simulate the PQ phase transition.
 NDIMS               2               % Number of dimensions (2 or 3).
 N                   128             % Number of grid points.
 space_step          1.0             % Space step in dimensionless program units (default space_step=1).

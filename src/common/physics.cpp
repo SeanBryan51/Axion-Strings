@@ -19,7 +19,7 @@ void set_physics_variables() {
     // Initial temperature in units of f_a.
     // Note: only need to set T to some value greater than sqrt(3)*(fa)
     // to simulate the PQ phase transition.
-    T_initial = 4.0f;
+    T_initial = parameters.T_initial;
 
     // Effective mass of the PQ potential: m_eff^2 = lambda ( T^2/3 - fa^2 )
     m_eff_squared = parameters.lambda * (pow_2(T_initial) / 3.0f - 1.0f);

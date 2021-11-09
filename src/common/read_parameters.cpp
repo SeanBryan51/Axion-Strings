@@ -43,6 +43,11 @@ static int parameters_to_read(Parameter *p_list) {
     p_list[n_params].type = INT;
     n_params++;
 
+    strcpy(p_list[n_params].tag, "T_initial");
+    p_list[n_params].addr = &parameters.T_initial;
+    p_list[n_params].type = FLOAT;
+    n_params++;
+
     strcpy(p_list[n_params].tag, "NDIMS");
     p_list[n_params].addr = &parameters.NDIMS;
     p_list[n_params].type = INT;
